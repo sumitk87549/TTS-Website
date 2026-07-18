@@ -1,0 +1,107 @@
+<div class="studio-container">
+
+  <!-- ── Top Bar ── -->
+  <div class="top-bar">
+    <div class="left-controls">
+      <div class="usage-chip" [class.warn]="charsLeft < 500">
+        <span class="dot"></span>
+        {{ charsLeft | number }} chars remaining
+      </div>
+
+      <select class="control-select" (change)="applyStyle($any($event.target).value)">
+        <option value="">Preset...</option>
+        <option value="Story">Story/Narration</option>
+        <option value="Promotional">Promotional</option>
+        <option value="Greeting">Greeting</option>
+        <option value="News">News</option>
+      </select>
+
+      <select class="control-select" [(ngModel)]="selectedProjectId">
+        <option [ngValue]="null">No Project</option>
+        <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+      </select>
+    </div>
+
+    <div class="right-controls">
+      <div class="toggle-group">
+        <button class="toggle-btn active">Single</button>
+        <button class="toggle-btn disabled" title="Multi-speaker dialogue is coming soon">Dialogue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Editor ── -->
+  <div class="editor-section">
+    <div class="editor-header">
+      <span class="script-pill">Hindi Script</span>
+      <span class="char-count" [class.danger]="text.length > maxChars">
+        {{ text.length | number }} / {{ maxChars | number }}
+      </span>
+    </div>
+    <textarea
+      [(ngModel)]="text"
+      placeholder="Type your Hindi script here..."
+      [maxLength]="maxChars"></textarea>
+  </div>
+
+  <!-- ── Result ── -->
+  <div class="result-section" *ngIf="error || audioUrl || generating">
+    <div class="error-msg" *ngIf="error">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      {{ error }}
+    </div>
+    <div class="loading-state" *ngIf="generating">
+      <span class="soundwave-anim">
+        <span></span><span></span><span></span><span></span><span></span>
+      </span>
+      Generating voice...
+    </div>
+    <div class="audio-player" *ngIf="audioUrl">
+      <audio [src]="audioUrl" controls autoplay></audio>
+      <a [href]="audioUrl" download="words2voice_audio.wav" class="btn-download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Voice Picker ── -->
+  <div class="voice-picker">
+    <div class="tabs">
+      <button class="tab" [class.active]="selectedTab === 'Male'" (click)="selectedTab = 'Male'">Male</button>
+      <button class="tab" [class.active]="selectedTab === 'Female'" (click)="selectedTab = 'Female'">Female</button>
+      <button class="tab" [class.active]="selectedTab === 'My Voices'" (click)="selectedTab = 'My Voices'">My Voices</button>
+    </div>
+
+    <div class="tab-content" *ngIf="selectedTab === 'Male' || selectedTab === 'Female'">
+      <div class="voice-grid">
+        <div class="voice-card"
+             *ngFor="let v of (selectedTab === 'Male' ? maleVoices : femaleVoices)"
+             [class.selected]="selectedVoiceId === v.id"
+             (click)="selectVoice(v)">
+          <div class="avatar" [class.female]="v.gender === 'female'">{{ v.display_name.charAt(0) }}</div>
+          <div class="info">
+            <div class="name">{{ v.display_name }}</div>
+            <div class="tag">{{ v.style_tag }}</div>
+          </div>
+          <div class="check-mark" *ngIf="selectedVoiceId === v.id">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content empty-state" *ngIf="selectedTab === 'My Voices'">
+      <p>Voice cloning is coming with premium models — <a routerLink="/about">see the roadmap</a>.</p>
+    </div>
+  </div>
+
+  <!-- ── Bottom Action ── -->
+  <div class="bottom-bar">
+    <button class="btn-generate" (click)="generate()" [disabled]="generating || !text || text.length > maxChars || !selectedEngineVoiceId">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Generate Audio
+    </button>
+  </div>
+
+</div>

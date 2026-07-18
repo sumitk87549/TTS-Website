@@ -1,0 +1,64 @@
+<main class="contact-page">
+  <nav class="page-nav">
+    <a routerLink="/" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Home
+    </a>
+  </nav>
+
+  <div class="container">
+    <h1>Get in Touch</h1>
+    <p class="intro">
+      Question, suggestion, or just want to say hi? I read every message.
+    </p>
+
+    <div class="contact-grid">
+      <div class="form-card" *ngIf="!submitted">
+        <div class="error-msg" *ngIf="error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          {{ error }}
+        </div>
+        <form (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="contact-name">Your Name</label>
+            <input type="text" id="contact-name" [(ngModel)]="name" name="name" required placeholder="Priya" />
+          </div>
+          <div class="form-group">
+            <label for="contact-email">Email Address</label>
+            <input type="email" id="contact-email" [(ngModel)]="email" name="email" required placeholder="priya@example.com" />
+          </div>
+          <div class="form-group">
+            <label for="contact-message">Message</label>
+            <textarea id="contact-message" [(ngModel)]="message" name="message" required rows="5"
+              placeholder="What's on your mind?"></textarea>
+          </div>
+          <button type="submit" class="btn-send" [disabled]="loading || !name || !email || !message">
+            {{ loading ? 'Sending...' : 'Send Message' }}
+          </button>
+        </form>
+      </div>
+
+      <div class="success-card" *ngIf="submitted">
+        <div class="icon">✉️</div>
+        <h3>Message sent!</h3>
+        <p>Thanks for writing in. I'll get back to you when I can.</p>
+      </div>
+
+      <div class="contact-info">
+        <div class="info-block">
+          <h3>Other ways to reach me</h3>
+          <p class="note">Hobby project — response times are best-effort.</p>
+          <p>📧 <a href="mailto:hello@words2voice.in">hello&#64;words2voice.in</a></p>
+        </div>
+        <div class="info-block">
+          <h3>Found a bug?</h3>
+          <p>Describe what happened vs. what you expected. Screenshots help.</p>
+        </div>
+        <div class="info-block">
+          <h3>Feature ideas?</h3>
+          <p>Your input genuinely shapes what gets built next.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

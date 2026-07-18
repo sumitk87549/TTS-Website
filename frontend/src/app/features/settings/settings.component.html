@@ -1,0 +1,112 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h2>Settings</h2>
+    <p class="subtitle">Manage your account and preferences.</p>
+  </div>
+
+  <!-- Profile -->
+  <section class="settings-section">
+    <h3>Profile</h3>
+    <div class="section-card">
+      <div class="alert-success" *ngIf="profileSuccess">{{ profileSuccess }}</div>
+
+      <div class="form-group readonly">
+        <label>Email Address</label>
+        <input type="text" [value]="user.email" disabled />
+      </div>
+
+      <div class="form-group">
+        <label>Display Name</label>
+        <input type="text" [(ngModel)]="displayNameInput" />
+      </div>
+
+      <button class="btn-primary" (click)="updateProfile()" [disabled]="displayNameInput === user.displayName || !displayNameInput.trim()">
+        Save Changes
+      </button>
+    </div>
+  </section>
+
+  <!-- Password -->
+  <section class="settings-section">
+    <h3>Password</h3>
+    <div class="section-card">
+      <div class="alert-success" *ngIf="passwordSuccess">{{ passwordSuccess }}</div>
+      <div class="alert-error" *ngIf="passwordError">{{ passwordError }}</div>
+
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" [(ngModel)]="currentPassword" autocomplete="current-password" />
+      </div>
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" [(ngModel)]="newPassword" autocomplete="new-password" />
+      </div>
+
+      <button class="btn-primary" (click)="changePassword()" [disabled]="!currentPassword || !newPassword">
+        Update Password
+      </button>
+    </div>
+  </section>
+
+  <!-- Danger Zone -->
+  <section class="settings-section">
+    <h3>Danger Zone</h3>
+    <div class="section-card danger">
+      <div class="danger-text">
+        <h4>Delete Account</h4>
+        <p>Once deleted, all your projects and audio files are gone forever.</p>
+      </div>
+      <button class="btn-danger" (click)="deleteAccount()">Delete Account</button>
+    </div>
+  </section>
+
+  <!-- Upgrade / Feedback -->
+  <section class="settings-section" id="upgrade">
+    <h3>Feedback</h3>
+    <div class="section-card research-card">
+      <div *ngIf="!interestSubmitted">
+        <p class="research-intro">
+          This is free while we're testing. Telling us whether you'd ever pay helps decide what to build next.
+        </p>
+        <div class="alert-error" *ngIf="interestError">{{ interestError }}</div>
+
+        <div class="form-group radio-group">
+          <label>Would you ever pay for a premium version?</label>
+          <div class="radio-options">
+            <label class="radio-label">
+              <input type="radio" name="wouldPay" value="yes" [(ngModel)]="wouldPay" /> Yes
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="wouldPay" value="maybe" [(ngModel)]="wouldPay" /> Maybe
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="wouldPay" value="no" [(ngModel)]="wouldPay" /> No
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="wouldPay === 'yes' || wouldPay === 'maybe'">
+          <label>What would feel fair per month? (₹)</label>
+          <input type="number" [(ngModel)]="suggestedPriceInr" placeholder="e.g. 500" />
+        </div>
+
+        <div class="form-group">
+          <label>Any other thoughts?</label>
+          <textarea [(ngModel)]="comment" rows="2" placeholder="Optional"></textarea>
+        </div>
+
+        <button class="btn-primary" (click)="submitInterest()" [disabled]="!wouldPay || interestLoading">
+          {{ interestLoading ? 'Submitting...' : 'Submit Feedback' }}
+        </button>
+      </div>
+
+      <div class="thank-you-state" *ngIf="interestSubmitted">
+        <div class="icon">✨</div>
+        <h4>Thank you!</h4>
+        <p>Your feedback is incredibly helpful in deciding what to build next.</p>
+      </div>
+    </div>
+  </section>
+
+</div>

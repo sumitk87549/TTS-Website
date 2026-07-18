@@ -1,0 +1,38 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>History</h2>
+    <p class="subtitle">All your past generations.</p>
+  </div>
+
+  <div class="empty-state" *ngIf="generations.length === 0">
+    <div class="empty-icon">🔇</div>
+    <p>No generations yet. Create something in the Studio to see it here.</p>
+  </div>
+
+  <div class="history-list" *ngIf="generations.length > 0">
+    <div class="history-row" *ngFor="let g of generations">
+      <div class="col-text">
+        <div class="preview">{{ g.input_text }}</div>
+        <div class="meta">{{ g.voice_name }} · {{ g.created_at | date:'short' }}</div>
+      </div>
+      <div class="col-status">
+        <span class="badge" [class.success]="g.status === 'success'" [class.failed]="g.status === 'failed'">{{ g.status }}</span>
+      </div>
+      <div class="col-actions">
+        <button class="btn-like" [class.liked]="g.is_liked" (click)="toggleLike(g)" *ngIf="g.status === 'success'" title="Favorite">
+          <svg width="18" height="18" viewBox="0 0 24 24" [attr.fill]="g.is_liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+        <audio *ngIf="g.status === 'success'" [src]="getAudioUrl(g.id)" controls></audio>
+        <button class="btn-delete" (click)="deleteGeneration(g.id)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="load-more" *ngIf="generations.length > 0 && generations.length % 50 === 0">
+    <button class="btn-secondary" (click)="loadMore()">Load Older</button>
+  </div>
+</div>

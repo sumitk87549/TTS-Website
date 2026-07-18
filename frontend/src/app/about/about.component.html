@@ -1,0 +1,108 @@
+<main class="about-page">
+  <nav class="page-nav">
+    <a routerLink="/" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Home
+    </a>
+  </nav>
+
+  <div class="container">
+    <!-- Origin -->
+    <section class="section hero-section">
+      <div class="tag">Solo Project · Built in Spare Time</div>
+      <h1>Why does this exist?</h1>
+      <p>
+        I make short-form Hindi content and got tired of paying for voice-over tools that
+        feel built for English speakers and priced in dollars. The good ones were expensive. The cheap ones
+        sounded robotic.
+      </p>
+      <p>
+        So I wired up an open-source Hindi TTS model to a web interface on my laptop, gave it a design,
+        and put it online. No VC funding. No team. Just evenings, weekends, and a question worth answering.
+      </p>
+    </section>
+
+    <!-- Mission Quote -->
+    <section class="section">
+      <div class="belief-card">
+        <div class="quote-mark">"</div>
+        <p>
+          Every story worth telling deserves a voice that does it justice — regardless of budget.
+          Hindi is one of the most spoken languages on earth, and its creators deserve purpose-built tools.
+        </p>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section">
+      <h2>How it works today</h2>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="icon">🆓</div>
+          <h3>Completely free right now</h3>
+          <p>No credit card, no trial limits, no nag screens. Free while we're testing.</p>
+        </div>
+        <div class="how-card">
+          <div class="icon">🤖</div>
+          <h3>Powered by open-source AI</h3>
+          <p>The voice model is Supertonic, an open-source Hindi TTS engine running locally.</p>
+        </div>
+        <div class="how-card">
+          <div class="icon">💸</div>
+          <h3>May need paid tiers eventually</h3>
+          <p>If this gets real users, an optional paid tier will cover running costs. The free tier stays.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section">
+      <h2>Roadmap <span class="qualifier">— if it takes off</span></h2>
+      <p class="roadmap-intro">Honest intentions, not promises with dates.</p>
+      <ul class="roadmap-list">
+        <li>
+          <span class="dot green"></span>
+          <div>
+            <strong>More Indian languages</strong>
+            <p>Tamil, Telugu, Bengali — quality-first, not checkbox support.</p>
+          </div>
+        </li>
+        <li>
+          <span class="dot yellow"></span>
+          <div>
+            <strong>More voice styles</strong>
+            <p>News anchor, storyteller, young/elder voices for specific content needs.</p>
+          </div>
+        </li>
+        <li>
+          <span class="dot blue"></span>
+          <div>
+            <strong>Voice cloning (premium)</strong>
+            <p>Train a model on your recordings. Requires better hardware, so it'll be premium.</p>
+          </div>
+        </li>
+        <li>
+          <span class="dot grey"></span>
+          <div>
+            <strong>Multi-speaker dialogue</strong>
+            <p>Conversations between voices. Technically possible, needs careful engineering.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- CTA -->
+    <section class="section cta-section">
+      <h2>One thing that would help</h2>
+      <p>
+        If you've used this tool, telling us whether you'd ever pay for something like this
+        is the most useful feedback you can give. You can do that in
+        <a routerLink="/settings">Settings</a> once signed in.
+      </p>
+      <div class="cta-buttons">
+        <a routerLink="/signup" class="btn-accent">Try it free</a>
+        <a routerLink="/contact" class="btn-ghost">Send feedback</a>
+      </div>
+    </section>
+  </div>
+</main>
