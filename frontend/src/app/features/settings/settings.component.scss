@@ -1,37 +1,48 @@
-/* ═══ Settings ═══ */
+/* ═══ Settings — Premium ═══ */
 .page-container {
   padding: 2rem;
-  max-width: 700px;
+  max-width: 740px;
   margin: 0 auto;
   animation: fade-in 0.4s ease-out;
 }
 
 .page-header {
-  margin-bottom: 2rem;
-  h2 { color: var(--text-primary); margin-bottom: 0.25rem; }
-  .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+  margin-bottom: 2.5rem;
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
 }
 
 .settings-section {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 
   h3 {
-    font-size: 0.9rem;
-    color: var(--text-muted);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.875rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border);
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 
 .section-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
+  border-radius: 1rem;
+  padding: 1.75rem;
 
   &.danger {
     border-color: var(--danger);
@@ -44,62 +55,210 @@
 
   &.research-card {
     background: var(--bg-surface);
-    border: 1px solid var(--border);
   }
 }
 
+/* ── Avatar Card ── */
+.avatar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.avatar-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.avatar-preview-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.avatar-preview-emoji {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.avatar-preview-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.avatar-label-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.avatar-label-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.avatar-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: -0.5rem;
+}
+
+.avatar-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 0.5rem;
+
+  @media (max-width: 500px) { grid-template-columns: repeat(6, 1fr); }
+}
+
+.avatar-emoji-btn {
+  aspect-ratio: 1;
+  font-size: 1.4rem;
+  border: 2px solid transparent;
+  border-radius: 0.625rem;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  &:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    transform: scale(1.1);
+  }
+
+  &.selected {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    box-shadow: 0 0 12px var(--accent-glow);
+    transform: scale(1.05);
+  }
+}
+
+.color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.color-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover { transform: scale(1.15); box-shadow: var(--shadow-md); }
+
+  &.selected {
+    border-color: var(--text-primary);
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px var(--bg-surface), 0 0 0 5px var(--accent);
+  }
+}
+
+.avatar-save-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .save-confirm {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--success);
+    animation: fade-in 0.3s ease;
+  }
+}
+
+/* ── Form Fields ── */
 .form-group {
   margin-bottom: 1.25rem;
 
   label {
     display: block;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
   }
 
   input, textarea {
     width: 100%;
-    max-width: 400px;
-    padding: 0.7rem 1rem;
+    max-width: 480px;
+    padding: 0.75rem 1rem;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 0.625rem;
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 1rem;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     resize: vertical;
 
     &::placeholder { color: var(--text-muted); }
-    &:focus { border-color: var(--accent); }
-    &:disabled { background: var(--bg-hover); color: var(--text-muted); cursor: not-allowed; }
+    &:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+    &:disabled {
+      background: var(--bg-hover);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      opacity: 0.75;
+    }
   }
 
-  textarea { max-width: 100%; }
+  textarea {
+    max-width: 100%;
+    min-height: 80px;
+  }
+
+  &.readonly input {
+    /* email field — visually dimmed but styled */
+    border-style: dashed;
+  }
 }
 
 .btn-primary {
-  padding: 0.7rem 1.5rem;
+  padding: 0.75rem 1.75rem;
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.9rem;
+  border-radius: 0.625rem;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
 
-  &:hover:not(:disabled) { background: var(--accent-hover); }
+  &:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow);
+  }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .danger-text {
-  h4 { color: var(--danger); margin: 0 0 0.25rem 0; font-size: 1rem; }
-  p { margin: 0; color: var(--danger); font-size: 0.85rem; opacity: 0.8; }
+  h4 { color: var(--danger); margin: 0 0 0.3rem 0; font-size: 1rem; font-weight: 700; }
+  p { margin: 0; color: var(--danger); font-size: 0.875rem; opacity: 0.85; }
 }
 
 .btn-danger {
@@ -107,41 +266,48 @@
   background: var(--danger);
   color: #fff;
   border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
+  border-radius: 0.625rem;
+  font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
   transition: all 0.2s;
-  &:hover { opacity: 0.85; }
+  &:hover { opacity: 0.85; transform: translateY(-1px); }
 }
 
 .alert-success, .alert-error {
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   margin-bottom: 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .alert-success { background: var(--success-subtle); color: var(--success); }
-.alert-error { background: var(--danger-subtle); color: var(--danger); }
+.alert-error   { background: var(--danger-subtle); color: var(--danger); }
 
 .research-intro {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  line-height: 1.7;
   margin-bottom: 1.5rem;
 }
 
 .radio-group {
   margin-bottom: 1.5rem;
 
+  > label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
   .radio-options {
     display: flex;
     gap: 1.5rem;
-    margin-top: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .radio-label {
@@ -151,6 +317,7 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
     cursor: pointer;
+    font-weight: 500;
 
     input[type="radio"] {
       width: 1.1rem;
@@ -162,15 +329,20 @@
 
 .thank-you-state {
   text-align: center;
-  padding: 2rem 0;
+  padding: 2.5rem 0;
 
-  .icon { font-size: 2.5rem; margin-bottom: 1rem; }
-  h4 { color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .ty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  h4 { color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 700; }
   p { color: var(--text-muted); font-size: 0.9rem; }
 }
 
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 640px) {
-  .page-container { padding: 1.5rem; }
+  .page-container { padding: 1.25rem; }
   .section-card.danger {
     flex-direction: column;
     align-items: flex-start;

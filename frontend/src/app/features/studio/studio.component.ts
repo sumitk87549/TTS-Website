@@ -1,9 +1,9 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 interface Voice {
   id: number;
@@ -11,28 +11,24 @@ interface Voice {
   display_name: string;
   gender: string;
   style_tag: string;
-}
-
-interface UsageStat {
-  charactersUsed: number;
-  charactersLimit: number;
+  description?: string;
 }
 
 @Component({
   selector: 'app-studio',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './studio.component.html',
   styleUrls: ['./studio.component.scss']
 })
-export class StudioComponent implements OnInit {
+export class StudioComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
-  private sanitizer = inject(DomSanitizer);
+  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
 
   // ── Text ────────────────────────────────────────────────────────────
   text = '';
   maxChars = 1000;
-  usage: UsageStat = { charactersUsed: 0, charactersLimit: 5000 };
 
   // ── Voices ──────────────────────────────────────────────────────────
   voices: Voice[] = [];
@@ -42,7 +38,6 @@ export class StudioComponent implements OnInit {
   selectedVoice: Voice | null = null;
 
   // ── TTS Controls ────────────────────────────────────────────────────
-  /** Language presets */
   readonly langOptions = [
     { value: 'na',  label: '🌐 Auto (Hinglish)' },
     { value: 'hi',  label: '🇮🇳 Hindi' },
@@ -50,7 +45,6 @@ export class StudioComponent implements OnInit {
   ];
   selectedLang = 'na';
 
-  /** Speed presets */
   readonly speedPresets = [
     { value: 0.75, label: '0.75×' },
     { value: 0.9,  label: '0.9×'  },
@@ -61,57 +55,90 @@ export class StudioComponent implements OnInit {
   ];
   speed = 1.0;
 
-  /** Quality presets */
   readonly qualityPresets = [
     { steps: 4,  label: 'Draft',    description: 'Fast preview' },
     { steps: 8,  label: 'Standard', description: 'Balanced quality' },
     { steps: 16, label: 'High',     description: 'Rich voice quality' },
-    { steps: 32, label: 'Ultra',    description: 'Studio-grade (slow)' },
+    { steps: 32, label: 'Ultra',    description: 'Studio-grade' },
   ];
-  selectedQuality = this.qualityPresets[1]; // Standard
+  // ★ Ultra is now the default
+  selectedQuality = this.qualityPresets[3];
 
-  // ── Generation state ────────────────────────────────────────────────
+  // ── Generation state ─────────────────────────────────────────────────
   generating = false;
   error = '';
   audioUrl: string | null = null;
-  audioDuration: number | null = null;
-  generationTime: number | null = null;
 
-  // ── Projects ────────────────────────────────────────────────────────
+  // ── Voice Preview state ──────────────────────────────────────────────
+  previewLoadingId: string | null = null;
+  previewPlayingId: string | null = null;
+  private _previewAudio: HTMLAudioElement | null = null;
+
+  // ── Projects ─────────────────────────────────────────────────────────
   projects: any[] = [];
   selectedProjectId: number | null = null;
 
-  // ── Script presets ──────────────────────────────────────────────────
+  // ── UI State ─────────────────────────────────────────────────────────
+  settingsOpen = false;
+  showFirstRun = !localStorage.getItem('w2v-seen-intro');
+
+  readonly placeholderExamples = [
+    'Type your Hindi / English / Hinglish script here…\n\nFor example: Yaar, aaj का दिन bahut amazing था!',
+    'एक समय की बात है, एक छोटे से गाँव में…\n\n(Hindi, English, and Hinglish all work here!)',
+    'Good morning! Aaj hum baat karenge ek important topic ke baare mein…',
+    'नमस्ते! आपका हमारे channel पर swagat hai। आज ka video bahut special hai…',
+  ];
+  private _placeholderIdx = 0;
+  currentPlaceholder = this.placeholderExamples[0];
+  private _placeholderTimer: ReturnType<typeof setInterval> | null = null;
+
   readonly scriptPresets = [
     { label: 'Story / Narration', text: 'एक समय की बात है, एक छोटे से गाँव में एक होनहार लड़की रहती थी। उसका नाम था आनंदी।' },
     { label: 'Promotional',       text: 'क्या आप अपने व्यापार को नई ऊँचाइयों पर ले जाना चाहते हैं? आज ही हमसे जुड़ें और अपने सपनों को साकार करें!' },
     { label: 'Greeting',          text: 'नमस्ते! आपका स्वागत है। आपका दिन शुभ और मंगलमय हो।' },
     { label: 'News Bulletin',     text: 'आज की ताज़ा ख़बरें: देश के विभिन्न हिस्सों में मानसून की अच्छी बारिश दर्ज की गई है।' },
-    { label: 'Hinglish Casual',   text: 'Yaar, aaj ka din bahut amazing raha! Maine socha tha ki kuch naya try karein, toh let\'s go!' },
+    { label: 'Hinglish Casual',   text: "Yaar, aaj ka din bahut amazing raha! Maine socha tha ki kuch naya try karein, toh let's go!" },
     { label: 'English Business',  text: 'Good morning! Our quarterly results show a 28% growth in revenue. Let us walk through the key highlights.' },
   ];
 
-  // ── Lifecycle ────────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────
   ngOnInit() {
-    this.fetchUsage();
     this.fetchVoices();
     this.fetchProjects();
+    this._placeholderTimer = setInterval(() => {
+      if (!this.text) {
+        this._placeholderIdx = (this._placeholderIdx + 1) % this.placeholderExamples.length;
+        this.currentPlaceholder = this.placeholderExamples[this._placeholderIdx];
+      }
+    }, 4000);
   }
 
-  fetchUsage() {
-    this.http.get<any>(`${environment.apiBaseUrl}/usage/today`).subscribe({
-      next: res => this.usage = res,
-      error: () => {}
-    });
+  ngOnDestroy() {
+    if (this._placeholderTimer) clearInterval(this._placeholderTimer);
+    if (this._previewAudio) {
+      this._previewAudio.pause();
+      this._previewAudio = null;
+    }
+  }
+
+  dismissFirstRun() {
+    this.showFirstRun = false;
+    localStorage.setItem('w2v-seen-intro', '1');
   }
 
   fetchVoices() {
     this.http.get<Voice[]>(`${environment.apiBaseUrl}/voices`).subscribe({
       next: res => {
-        this.voices = res;
-        this.maleVoices   = res.filter(v => v.gender === 'male');
-        this.femaleVoices = res.filter(v => v.gender === 'female');
-        if (this.maleVoices.length > 0) this.selectVoice(this.maleVoices[0]);
+        this.ngZone.run(() => {
+          this.voices = (res || []).map(v => ({
+            ...v,
+            display_name: v.display_name.replace(/^(M|F)\d+\s*-\s*/i, '')
+          }));
+          this.maleVoices   = this.voices.filter(v => v.gender === 'male');
+          this.femaleVoices = this.voices.filter(v => v.gender === 'female');
+          if (this.maleVoices.length > 0) this.selectVoice(this.maleVoices[0]);
+          this.cdr.markForCheck();
+        });
       },
       error: () => {}
     });
@@ -119,20 +146,20 @@ export class StudioComponent implements OnInit {
 
   fetchProjects() {
     this.http.get<any[]>(`${environment.apiBaseUrl}/projects`).subscribe({
-      next: res => this.projects = res,
+      next: res => {
+        this.ngZone.run(() => {
+          this.projects = res;
+          this.cdr.markForCheck();
+        });
+      },
       error: () => {}
     });
   }
 
-  // ── Voice selection ──────────────────────────────────────────────────
-  selectVoice(v: Voice) {
-    this.selectedVoice = v;
-  }
+  selectVoice(v: Voice) { this.selectedVoice = v; }
 
-  // ── Script preset ────────────────────────────────────────────────────
   applyPreset(preset: { label: string; text: string }) {
     this.text = preset.text;
-    // Auto-detect language hint
     const hasHindi = /[\u0900-\u097F]/.test(preset.text);
     const hasLatin = /[a-zA-Z]/.test(preset.text);
     if (hasHindi && hasLatin) this.selectedLang = 'na';
@@ -140,38 +167,86 @@ export class StudioComponent implements OnInit {
     else                      this.selectedLang = 'en';
   }
 
-  // ── Controls helpers ─────────────────────────────────────────────────
-  get charsLeft() { return this.usage.charactersLimit - this.usage.charactersUsed; }
+  tryRandomPreset() {
+    const idx = Math.floor(Math.random() * this.scriptPresets.length);
+    this.applyPreset(this.scriptPresets[idx]);
+  }
+
   get charsPercent() { return Math.round((this.text.length / this.maxChars) * 100); }
-  get usagePercent() { return Math.round((this.usage.charactersUsed / this.usage.charactersLimit) * 100); }
 
   selectQuality(q: typeof this.qualityPresets[0]) { this.selectedQuality = q; }
   selectSpeed(s: number) { this.speed = s; }
   selectLang(l: string) { this.selectedLang = l; }
 
-  // ── Generate ─────────────────────────────────────────────────────────
+  // ── Voice Preview ──────────────────────────────────────────────────────
+  playVoicePreview(v: Voice, event: MouseEvent) {
+    event.stopPropagation(); // Don't select the voice
+
+    // Stop any existing preview
+    if (this._previewAudio) {
+      this._previewAudio.pause();
+      this._previewAudio = null;
+    }
+
+    // If clicking the same voice that's playing, just stop
+    if (this.previewPlayingId === v.engine_voice_id) {
+      this.previewPlayingId = null;
+      return;
+    }
+
+    this.previewLoadingId = v.engine_voice_id;
+    this.previewPlayingId = null;
+
+    const greeting = 'नमस्ते! मैं आपकी आवाज़ हूँ। कैसे हैं आप?';
+
+    this.http.post(
+      `${environment.apiBaseUrl}/public/tts/preview`,
+      { text: greeting, engineVoiceId: v.engine_voice_id },
+      { responseType: 'blob' }
+    ).subscribe({
+      next: (blob) => {
+        this.ngZone.run(() => {
+          this.previewLoadingId = null;
+          this.previewPlayingId = v.engine_voice_id;
+          const url = URL.createObjectURL(blob as Blob);
+          this._previewAudio = new Audio(url);
+          this.cdr.markForCheck();
+          this._previewAudio.play();
+          this._previewAudio.onended = () => {
+            this.ngZone.run(() => {
+              this.previewPlayingId = null;
+              URL.revokeObjectURL(url);
+              this.cdr.markForCheck();
+            });
+          };
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.previewLoadingId = null;
+          this.cdr.markForCheck();
+        });
+      }
+    });
+  }
+
+  // ── Generate ──────────────────────────────────────────────────────────
   generate() {
     if (!this.text.trim() || !this.selectedVoice) return;
     this.generating = true;
     this.error = '';
 
-    // Revoke any previous Object URL to free memory
     if (this.audioUrl && this.audioUrl.startsWith('blob:')) {
       URL.revokeObjectURL(this.audioUrl);
     }
     this.audioUrl = null;
-    this.audioDuration = null;
-    this.generationTime = null;
 
-    // responseType: 'blob' — Spring returns audio/wav bytes directly.
-    // This completely avoids the Jackson JSON serialisation issue in
-    // spring-boot-starter-webmvc where Map.of() responses never complete.
     this.http.post(
       `${environment.apiBaseUrl}/tts/generate`,
       {
         text: this.text,
         voiceId: this.selectedVoice.engine_voice_id,
-        engineVoiceId: this.selectedVoice.engine_voice_id, // legacy compat
+        engineVoiceId: this.selectedVoice.engine_voice_id,
         lang: this.selectedLang,
         speed: this.speed,
         totalSteps: this.selectedQuality.steps,
@@ -180,24 +255,25 @@ export class StudioComponent implements OnInit {
       { responseType: 'blob' }
     ).subscribe({
       next: (blob: Blob) => {
-        this.audioUrl = URL.createObjectURL(blob);
-        this.generating = false;
-        this.fetchUsage();
+        this.ngZone.run(() => {
+          this.audioUrl = URL.createObjectURL(blob);
+          this.generating = false;
+          this.cdr.markForCheck();
+        });
       },
       error: (err) => {
-        if (err.status === 429) {
-          this.error = 'Daily character limit reached. Resets tomorrow.';
-        } else if (err.status === 503) {
-          this.error = 'Voice engine is not running. Start tts-service/start-tts-service.sh first.';
-        } else {
-          this.error = 'Failed to generate audio. Please try again.';
-        }
-        this.generating = false;
+        this.ngZone.run(() => {
+          if (err.status === 429) {
+            this.error = 'Daily character limit reached. Resets tomorrow.';
+          } else if (err.status === 503) {
+            this.error = 'Voice engine is not running. Start tts-service/start-tts-service.sh first.';
+          } else {
+            this.error = 'Failed to generate audio. Please try again.';
+          }
+          this.generating = false;
+          this.cdr.markForCheck();
+        });
       }
     });
-  }
-
-  downloadUrl(): string | null {
-    return this.audioUrl;
   }
 }

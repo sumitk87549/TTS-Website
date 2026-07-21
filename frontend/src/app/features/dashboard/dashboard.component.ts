@@ -1,10 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth';
 import { ThemeService } from '../../core/theme/theme.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,27 +14,47 @@ import { environment } from '../../../environments/environment';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
-  http = inject(HttpClient);
+  private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
 
   menuOpen = false;
-  usage = { charactersUsed: 0, charactersLimit: 5000, generationCount: 0 };
+
+  // Avatar state
+  avatarEmoji = '🎤';
+  avatarColor = 'linear-gradient(135deg, #7c5cf7, #e8608a)';
+  avatarName = 'My Profile';
+
+  private sub?: Subscription;
 
   ngOnInit() {
-    this.http.get<any>(`${environment.apiBaseUrl}/usage/today`).subscribe({
-      next: (res) => this.usage = res,
-      error: () => {}
+    this.loadProfileData();
+    this.sub = this.authService.profileUpdated$.subscribe(() => {
+      this.loadProfileData();
+    });
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+  }
+
+  loadProfileData() {
+    const saved = localStorage.getItem('w2v-avatar');
+    if (saved) this.avatarEmoji = saved;
+    const savedColor = localStorage.getItem('w2v-avatar-color');
+    if (savedColor) this.avatarColor = savedColor;
+
+    this.http.get<any>(`${environment.apiBaseUrl}/me`).subscribe(res => {
+      if (res.displayName) {
+        this.avatarName = res.displayName;
+      }
+      this.cdr.markForCheck();
     });
   }
 
   toggleMenu() { this.menuOpen = !this.menuOpen; }
   closeMenu() { this.menuOpen = false; }
   logout() { this.authService.logout(); }
-
-  get usagePercent() {
-    if (this.usage.charactersLimit === 0) return 0;
-    return Math.min(100, Math.round((this.usage.charactersUsed / this.usage.charactersLimit) * 100));
-  }
 }

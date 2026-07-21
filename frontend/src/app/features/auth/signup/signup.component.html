@@ -1,18 +1,23 @@
 <div class="auth-page">
   <div class="auth-decor">
     <div class="decor-content">
-      <span class="decor-icon">🎙️</span>
+      <img src="logo.png" alt="words2voice" class="decor-logo-img" />
       <h2>Start creating</h2>
       <p>Free Hindi text-to-speech, ready in seconds.</p>
+      <div class="decor-badges">
+        <span>🇮🇳 Made for India</span>
+        <span>✨ Fully Free</span>
+      </div>
     </div>
   </div>
   <div class="auth-form-side">
     <div class="auth-card">
       <a routerLink="/" class="auth-logo">
-        <span>🎙️</span> words2voice
+        <img src="logo.png" alt="words2voice" class="auth-logo-img" />
+        <span>words2voice</span>
       </a>
       <h2>Create your account</h2>
-      <p class="auth-subtitle">Start generating professional Hindi voices for free.</p>
+      <p class="auth-subtitle">Start creating natural Hindi voiceovers — free.</p>
 
       <div class="error-banner" *ngIf="error">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -32,8 +37,8 @@
           <label for="signup-password">Password</label>
           <input type="password" id="signup-password" [(ngModel)]="password" name="password" required placeholder="••••••••" autocomplete="new-password" />
         </div>
-        <button type="submit" class="btn-submit" [disabled]="loading || !email || !password || !displayName">
-          {{ loading ? 'Creating account...' : 'Create Account' }}
+        <button type="submit" class="btn-submit" [disabled]="loading || !email || !password || !displayName" id="btn-signup-submit">
+          {{ loading ? 'Creating account...' : 'Create Free Account' }}
         </button>
       </form>
 

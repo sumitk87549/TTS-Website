@@ -6,20 +6,53 @@
 }
 
 .page-nav {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 0 1rem;
-}
-
-.back-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
-  color: var(--accent);
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: opacity 0.2s;
-  &:hover { opacity: 0.8; }
+  justify-content: space-between;
+  padding: 1rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  width: 100%;
+
+  .home-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+
+    .nav-logo-img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.875rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+  }
 }
 
 .container {

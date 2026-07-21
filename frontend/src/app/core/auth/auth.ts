@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, Subject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -23,6 +23,13 @@ export class AuthService {
 
   get isAuthenticated(): boolean {
     return !!this.token;
+  }
+
+  // Event bus to sync profile updates between Settings and Dashboard
+  public profileUpdated$ = new Subject<void>();
+
+  notifyProfileUpdate() {
+    this.profileUpdated$.next();
   }
 
   register(data: any) {

@@ -1,9 +1,16 @@
 <main class="contact-page">
   <nav class="page-nav">
-    <a routerLink="/" class="back-link">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Home
+    <a routerLink="/" class="home-link">
+      <img src="logo.png" alt="words2voice" class="nav-logo-img" />
+      <span>words2voice</span>
     </a>
+    <button class="back-btn" (click)="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+      </svg>
+      Back
+    </button>
   </nav>
 
   <div class="container">
@@ -15,7 +22,11 @@
     <div class="contact-grid">
       <div class="form-card" *ngIf="!submitted">
         <div class="error-msg" *ngIf="error">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
           {{ error }}
         </div>
         <form (ngSubmit)="onSubmit()">
@@ -25,7 +36,8 @@
           </div>
           <div class="form-group">
             <label for="contact-email">Email Address</label>
-            <input type="email" id="contact-email" [(ngModel)]="email" name="email" required placeholder="priya@example.com" />
+            <input type="email" id="contact-email" [(ngModel)]="email" name="email" required
+              placeholder="priya@example.com" />
           </div>
           <div class="form-group">
             <label for="contact-message">Message</label>
@@ -48,7 +60,7 @@
         <div class="info-block">
           <h3>Other ways to reach me</h3>
           <p class="note">Hobby project — response times are best-effort.</p>
-          <p>📧 <a href="mailto:hello@words2voice.in">hello&#64;words2voice.in</a></p>
+          <p>📧 <a href="mailto:hello@words2voice.in">sumitk87549&#64;gmail.com</a></p>
         </div>
         <div class="info-block">
           <h3>Found a bug?</h3>

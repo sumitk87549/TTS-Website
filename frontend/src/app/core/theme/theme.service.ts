@@ -24,8 +24,8 @@ export class ThemeService {
 
   private loadTheme(): Theme {
     const stored = localStorage.getItem(this.storageKey);
-    if (stored === 'day' || stored === 'night') return stored;
-    // Default to night
+    // Only switch to day if explicitly saved — night is the default
+    if (stored === 'day') return 'day';
     return 'night';
   }
 

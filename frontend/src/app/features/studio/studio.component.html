@@ -1,35 +1,35 @@
 <div class="studio-container">
 
+  <!-- ── First-run Guidance Strip ── -->
+  <div class="first-run-strip" *ngIf="showFirstRun">
+    <div class="first-run-steps">
+      <span><strong>1</strong> Write or paste your script</span>
+      <span class="frs-sep">·</span>
+      <span><strong>2</strong> Pick a voice</span>
+      <span class="frs-sep">·</span>
+      <span><strong>3</strong> Generate — download or save it</span>
+    </div>
+    <button class="frs-dismiss" (click)="dismissFirstRun()" aria-label="Dismiss guide">✕</button>
+  </div>
+
   <!-- ── Top Bar ── -->
   <div class="top-bar">
     <div class="left-controls">
-
-      <!-- Usage chip -->
-      <div class="usage-chip" [class.warn]="charsLeft < 500">
-        <span class="dot"></span>
-        {{ charsLeft | number }} chars left today
-      </div>
-
-      <!-- Script presets -->
-      <div class="preset-dropdown-wrap">
-        <select id="script-preset" class="control-select" (change)="applyPreset(scriptPresets[$any($event.target).selectedIndex - 1])" aria-label="Script presets">
-          <option value="">Script Presets…</option>
-          <option *ngFor="let p of scriptPresets" [value]="p.label">{{ p.label }}</option>
-        </select>
+      <!-- "Fully Free" badge — trust signal -->
+      <div class="badge-free">
+        <span class="badge-free-dot"></span>
+        ✨ Fully Free
       </div>
 
       <!-- Project -->
-      <select id="project-select" class="control-select" [(ngModel)]="selectedProjectId" aria-label="Select project">
-        <option [ngValue]="null">No Project</option>
+      <select id="project-select" class="control-select project-select" [(ngModel)]="selectedProjectId" aria-label="Select project">
+        <option [ngValue]="null">No project ▾</option>
         <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
       </select>
     </div>
 
     <div class="right-controls">
-      <div class="toggle-group">
-        <button class="toggle-btn active">Single</button>
-        <button class="toggle-btn disabled" title="Multi-speaker coming soon">Dialogue</button>
-      </div>
+      <span class="badge-soon" title="Multi-speaker coming soon">Multi-speaker · soon</span>
     </div>
   </div>
 
@@ -53,7 +53,7 @@
         <textarea
           id="tts-text-input"
           [(ngModel)]="text"
-          placeholder="Type your Hindi / English / Hinglish script here…&#10;&#10;For example: Yaar, aaj का दिन bahut amazing था!"
+          [placeholder]="currentPlaceholder"
           [maxLength]="maxChars"
           aria-label="TTS text input"
           rows="8">
@@ -63,66 +63,79 @@
         </div>
       </div>
 
-      <!-- ── TTS Controls Panel ── -->
-      <div class="controls-panel">
+      <!-- ── Voice Settings Accordion ── -->
+      <div class="settings-accordion" [class.open]="settingsOpen">
+        <button class="settings-trigger" (click)="settingsOpen = !settingsOpen" id="btn-voice-settings" [attr.aria-expanded]="settingsOpen">
+          <span class="settings-trigger-left">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Voice settings
+          </span>
+          <span class="settings-current-chips">
+            <span class="chip">{{ selectedLang === 'na' ? 'Auto' : selectedLang === 'hi' ? 'Hindi' : 'English' }}</span>
+            <span class="chip">{{ speed }}×</span>
+            <span class="chip quality-chip">{{ selectedQuality.label }}</span>
+          </span>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
 
-        <!-- Language -->
-        <div class="control-group">
-          <div class="control-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            Language
+        <div class="settings-body" *ngIf="settingsOpen">
+          <!-- Language -->
+          <div class="control-group">
+            <div class="control-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Language
+            </div>
+            <div class="pill-group">
+              <button
+                *ngFor="let lang of langOptions"
+                class="pill-btn"
+                [class.active]="selectedLang === lang.value"
+                (click)="selectLang(lang.value)"
+                [id]="'lang-' + lang.value">
+                {{ lang.label }}
+              </button>
+            </div>
           </div>
-          <div class="pill-group">
-            <button
-              *ngFor="let lang of langOptions"
-              class="pill-btn"
-              [class.active]="selectedLang === lang.value"
-              (click)="selectLang(lang.value)"
-              [id]="'lang-' + lang.value">
-              {{ lang.label }}
-            </button>
+
+          <!-- Speed -->
+          <div class="control-group">
+            <div class="control-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Speed
+            </div>
+            <div class="pill-group">
+              <button
+                *ngFor="let s of speedPresets"
+                class="pill-btn"
+                [class.active]="speed === s.value"
+                (click)="selectSpeed(s.value)"
+                [id]="'speed-' + s.value">
+                {{ s.label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Quality -->
+          <div class="control-group">
+            <div class="control-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              Quality
+            </div>
+            <div class="quality-group">
+              <button
+                *ngFor="let q of qualityPresets"
+                class="quality-btn"
+                [class.active]="selectedQuality.steps === q.steps"
+                (click)="selectQuality(q)"
+                [id]="'quality-' + q.label.toLowerCase()"
+                [title]="q.description">
+                <span class="q-label">{{ q.label }}</span>
+                <span class="q-desc">{{ q.description }}</span>
+              </button>
+            </div>
           </div>
         </div>
-
-        <!-- Speed -->
-        <div class="control-group">
-          <div class="control-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Speed
-          </div>
-          <div class="pill-group">
-            <button
-              *ngFor="let s of speedPresets"
-              class="pill-btn"
-              [class.active]="speed === s.value"
-              (click)="selectSpeed(s.value)"
-              [id]="'speed-' + s.value">
-              {{ s.label }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Quality -->
-        <div class="control-group">
-          <div class="control-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            Quality
-          </div>
-          <div class="quality-group">
-            <button
-              *ngFor="let q of qualityPresets"
-              class="quality-btn"
-              [class.active]="selectedQuality.steps === q.steps"
-              (click)="selectQuality(q)"
-              [id]="'quality-' + q.label.toLowerCase()"
-              [title]="q.description">
-              <span class="q-label">{{ q.label }}</span>
-              <span class="q-desc">{{ q.description }}</span>
-            </button>
-          </div>
-        </div>
-
-      </div><!-- /controls-panel -->
+      </div><!-- /settings-accordion -->
 
     </div><!-- /editor-col -->
 
@@ -156,14 +169,50 @@
               role="button"
               [attr.aria-pressed]="selectedVoice?.id === v.id"
               [attr.aria-label]="'Select voice ' + v.display_name">
-              <div class="avatar" [class.female]="v.gender === 'female'">
-                {{ v.display_name.charAt(0) }}
+
+              <!-- Animated person avatar -->
+              <div class="voice-avatar" [class.female]="v.gender === 'female'">
+                <svg class="person-svg" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Head -->
+                  <circle cx="20" cy="12" r="9" fill="currentColor" opacity="0.9"/>
+                  <!-- Body -->
+                  <path d="M8 40 C8 28 12 24 20 24 C28 24 32 28 32 40 L32 52 Q20 56 8 52 Z" fill="currentColor" opacity="0.75"/>
+                  <!-- Sound waves (animated) -->
+                  <path class="wave-1" d="M35 18 Q39 22 35 26" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                  <path class="wave-2" d="M37 14 Q43 22 37 30" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                </svg>
               </div>
+
               <div class="voice-info">
                 <div class="voice-name">{{ v.display_name }}</div>
                 <div class="voice-id">{{ v.engine_voice_id }}</div>
                 <div class="voice-tag">{{ v.style_tag }}</div>
+                <div class="voice-desc" *ngIf="v.description">{{ v.description }}</div>
               </div>
+
+              <!-- Play preview button -->
+              <button
+                class="voice-preview-btn"
+                [class.loading]="previewLoadingId === v.engine_voice_id"
+                [class.playing]="previewPlayingId === v.engine_voice_id"
+                (click)="playVoicePreview(v, $event)"
+                [title]="previewPlayingId === v.engine_voice_id ? 'Stop preview' : 'Preview voice'"
+                [id]="'preview-' + v.engine_voice_id"
+                [attr.aria-label]="'Preview voice ' + v.display_name">
+                <!-- Loading spinner -->
+                <span *ngIf="previewLoadingId === v.engine_voice_id" class="preview-spinner"></span>
+                <!-- Stop icon when playing -->
+                <svg *ngIf="previewPlayingId === v.engine_voice_id && previewLoadingId !== v.engine_voice_id"
+                     width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                </svg>
+                <!-- Play icon normally -->
+                <svg *ngIf="previewPlayingId !== v.engine_voice_id && previewLoadingId !== v.engine_voice_id"
+                     width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </button>
+
               <div class="voice-check" *ngIf="selectedVoice?.id === v.id">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
@@ -198,7 +247,10 @@
 
     <div class="audio-player" *ngIf="audioUrl">
       <div class="audio-meta">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <div class="audio-ready-pill">
+          <span class="audio-ready-dot"></span>
+          Audio Ready!
+        </div>
         <span>{{ selectedVoice?.display_name }} · {{ selectedLang === 'na' ? 'Auto' : selectedLang === 'hi' ? 'Hindi' : 'English' }} · {{ speed }}× · {{ selectedQuality.label }}</span>
       </div>
       <div class="audio-row">
@@ -220,18 +272,21 @@
       <span class="gen-sep">·</span>
       <span class="gen-detail">{{ speed }}×</span>
     </div>
-    <button
-      id="btn-generate-audio"
-      class="btn-generate"
-      (click)="generate()"
-      [disabled]="generating || !text.trim() || text.length > maxChars || !selectedVoice"
-      [class.loading]="generating">
-      <span class="btn-icon" *ngIf="!generating">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      </span>
-      <span class="btn-spinner" *ngIf="generating"></span>
-      {{ generating ? 'Generating…' : 'Generate Audio' }}
-    </button>
+    <div class="generate-right">
+      <span class="generate-hint" *ngIf="!text.trim() && !generating">Add some text first</span>
+      <button
+        id="btn-generate-audio"
+        class="btn-generate"
+        (click)="generate()"
+        [disabled]="generating || !text.trim() || text.length > maxChars || !selectedVoice"
+        [class.loading]="generating">
+        <span class="btn-icon" *ngIf="!generating">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </span>
+        <span class="btn-spinner" *ngIf="generating"></span>
+        {{ generating ? 'Generating…' : 'Generate Audio' }}
+      </button>
+    </div>
   </div>
 
 </div>

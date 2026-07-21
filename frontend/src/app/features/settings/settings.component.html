@@ -2,10 +2,59 @@
 
   <div class="page-header">
     <h2>Settings</h2>
-    <p class="subtitle">Manage your account and preferences.</p>
+    <p class="subtitle">Manage your profile, avatar, and preferences.</p>
   </div>
 
-  <!-- Profile -->
+  <!-- ── Avatar / Profile Look ── -->
+  <section class="settings-section">
+    <h3>Your Avatar</h3>
+    <div class="section-card avatar-card">
+
+      <!-- Preview -->
+      <div class="avatar-preview-wrap">
+        <div class="avatar-preview-circle" [style.background]="selectedAvatarColor">
+          <span class="avatar-preview-emoji">{{ selectedAvatar }}</span>
+        </div>
+        <div class="avatar-preview-label">
+          <span class="avatar-label-name">Your avatar</span>
+          <span class="avatar-label-hint">Shown in the sidebar</span>
+        </div>
+      </div>
+
+      <!-- Emoji grid -->
+      <div class="avatar-section-label">Choose an icon</div>
+      <div class="avatar-emoji-grid">
+        <button
+          *ngFor="let emoji of avatarOptions"
+          class="avatar-emoji-btn"
+          [class.selected]="selectedAvatar === emoji"
+          (click)="selectedAvatar = emoji"
+          [title]="emoji">
+          {{ emoji }}
+        </button>
+      </div>
+
+      <!-- Color chooser -->
+      <div class="avatar-section-label">Choose a colour</div>
+      <div class="color-options">
+        <button
+          *ngFor="let c of colorOptions"
+          class="color-swatch"
+          [class.selected]="selectedAvatarColor === c.value"
+          [style.background]="c.value"
+          [title]="c.label"
+          (click)="selectedAvatarColor = c.value">
+        </button>
+      </div>
+
+      <div class="avatar-save-row">
+        <button class="btn-primary" (click)="saveAvatar()">Save Avatar</button>
+        <span class="save-confirm" *ngIf="avatarSaved">✓ Saved!</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Profile ── -->
   <section class="settings-section">
     <h3>Profile</h3>
     <div class="section-card">
@@ -13,12 +62,12 @@
 
       <div class="form-group readonly">
         <label>Email Address</label>
-        <input type="text" [value]="user.email" disabled />
+        <input type="text" [value]="user.email" disabled id="settings-email" />
       </div>
 
       <div class="form-group">
         <label>Display Name</label>
-        <input type="text" [(ngModel)]="displayNameInput" />
+        <input type="text" [(ngModel)]="displayNameInput" id="settings-display-name" placeholder="Your name" />
       </div>
 
       <button class="btn-primary" (click)="updateProfile()" [disabled]="displayNameInput === user.displayName || !displayNameInput.trim()">
@@ -27,7 +76,7 @@
     </div>
   </section>
 
-  <!-- Password -->
+  <!-- ── Password ── -->
   <section class="settings-section">
     <h3>Password</h3>
     <div class="section-card">
@@ -36,11 +85,11 @@
 
       <div class="form-group">
         <label>Current Password</label>
-        <input type="password" [(ngModel)]="currentPassword" autocomplete="current-password" />
+        <input type="password" [(ngModel)]="currentPassword" id="settings-current-pw" autocomplete="current-password" placeholder="Current password" />
       </div>
       <div class="form-group">
         <label>New Password</label>
-        <input type="password" [(ngModel)]="newPassword" autocomplete="new-password" />
+        <input type="password" [(ngModel)]="newPassword" id="settings-new-pw" autocomplete="new-password" placeholder="New password" />
       </div>
 
       <button class="btn-primary" (click)="changePassword()" [disabled]="!currentPassword || !newPassword">
@@ -49,7 +98,7 @@
     </div>
   </section>
 
-  <!-- Danger Zone -->
+  <!-- ── Danger Zone ── -->
   <section class="settings-section">
     <h3>Danger Zone</h3>
     <div class="section-card danger">
@@ -61,7 +110,7 @@
     </div>
   </section>
 
-  <!-- Upgrade / Feedback -->
+  <!-- ── Feedback ── -->
   <section class="settings-section" id="upgrade">
     <h3>Feedback</h3>
     <div class="section-card research-card">
@@ -88,12 +137,12 @@
 
         <div class="form-group" *ngIf="wouldPay === 'yes' || wouldPay === 'maybe'">
           <label>What would feel fair per month? (₹)</label>
-          <input type="number" [(ngModel)]="suggestedPriceInr" placeholder="e.g. 500" />
+          <input type="number" [(ngModel)]="suggestedPriceInr" id="settings-price" placeholder="e.g. 500" />
         </div>
 
         <div class="form-group">
           <label>Any other thoughts?</label>
-          <textarea [(ngModel)]="comment" rows="2" placeholder="Optional"></textarea>
+          <textarea [(ngModel)]="comment" rows="3" id="settings-comment" placeholder="Optional"></textarea>
         </div>
 
         <button class="btn-primary" (click)="submitInterest()" [disabled]="!wouldPay || interestLoading">
@@ -102,7 +151,7 @@
       </div>
 
       <div class="thank-you-state" *ngIf="interestSubmitted">
-        <div class="icon">✨</div>
+        <div class="ty-icon">✨</div>
         <h4>Thank you!</h4>
         <p>Your feedback is incredibly helpful in deciding what to build next.</p>
       </div>
