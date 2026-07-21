@@ -71,25 +71,20 @@ public class TtsController {
         }
 
         try {
-            // Find voice DB id
+            // Find voice DB id — if not found just log and proceed (not fatal for public preview)
             List<Map<String, Object>> voices = jdbcTemplate.queryForList(
                 "SELECT id FROM voice WHERE engine_voice_id = ?", 
-                request.getEngineVoiceId()
+                request.resolvedVoiceId()
             );
-            
-            if (voices.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid voice ID."));
-            }
-            
-            Long voiceId = ((Number) voices.get(0).get("id")).longValue();
+            Long voiceId = voices.isEmpty() ? 1L : ((Number) voices.get(0).get("id")).longValue();
 
-            // Call Supertonic
+            // Call Supertonic FastAPI service
             byte[] audioBytes = supertonicClient.synthesize(
                 request.getText(), 
-                request.getEngineVoiceId(), 
-                "hi", // lang hardcoded for now
-                1.0,  // speed
-                8     // totalSteps
+                request.resolvedVoiceId(),
+                request.resolvedLang(),
+                request.resolvedSpeed(),
+                request.resolvedTotalSteps()
             );
 
             // Save generation record

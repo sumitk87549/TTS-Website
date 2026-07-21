@@ -37,7 +37,10 @@ public class GenerationController {
     @Value("${app.usage.max-request-chars:1000}")
     private int maxChars;
 
-    public GenerationController(SupertonicClient supertonicClient, DashboardRepository dashboardRepository, AppUserRepository userRepository, JdbcTemplate jdbcTemplate) {
+    public GenerationController(SupertonicClient supertonicClient,
+                                DashboardRepository dashboardRepository,
+                                AppUserRepository userRepository,
+                                JdbcTemplate jdbcTemplate) {
         this.supertonicClient = supertonicClient;
         this.dashboardRepository = dashboardRepository;
         this.userRepository = userRepository;
@@ -48,61 +51,86 @@ public class GenerationController {
         return userRepository.findByEmail(auth.getName()).orElseThrow().id();
     }
 
+    /**
+     * Generate TTS audio for an authenticated user.
+     *
+     * Returns raw WAV bytes (audio/wav) instead of JSON so that Angular can
+     * receive it as a Blob and create an Object URL directly.
+     * This avoids the Jackson serialisation issue with spring-boot-starter-webmvc
+     * where Map.of() responses hang and never complete.
+     *
+     * The generation ID is carried in the X-Generation-Id response header.
+     */
     @PostMapping("/generate")
-    public ResponseEntity<?> generate(Authentication auth, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> generate(Authentication auth,
+                                      @RequestBody Map<String, Object> request) {
         Long userId = getUserId(auth);
         String text = (String) request.get("text");
-        String engineVoiceId = (String) request.get("engineVoiceId");
+
+        // Accept both voiceId (new) and engineVoiceId (legacy)
+        String voiceIdParam = (String) request.getOrDefault("voiceId",
+                             request.getOrDefault("engineVoiceId", "M1"));
+        String lang       = (String) request.getOrDefault("lang", "na");
+        double speed      = request.get("speed")      instanceof Number n ? n.doubleValue() : 1.0;
+        int totalSteps    = request.get("totalSteps") instanceof Number n ? n.intValue()    : 8;
+
         Number projectIdNum = (Number) request.get("projectId");
         Long projectId = projectIdNum != null ? projectIdNum.longValue() : null;
 
+        // ── Validation ───────────────────────────────────────────────────────
         if (text == null || text.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Text cannot be empty."));
+            return ResponseEntity.badRequest().build();
         }
         if (text.length() > maxChars) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Text exceeds maximum length of " + maxChars + " characters."));
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).build();
         }
 
         Map<String, Object> usage = dashboardRepository.getUsageToday(userId);
-        int charactersUsed = ((Number) usage.get("characters_used")).intValue();
-        if (charactersUsed + text.length() > dailyLimit) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(Map.of("error", "Daily limit of " + dailyLimit + " characters exceeded. Resets tomorrow."));
+        int charsUsed = ((Number) usage.get("characters_used")).intValue();
+        if (charsUsed + text.length() > dailyLimit) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
         }
 
-        List<Map<String, Object>> voices = jdbcTemplate.queryForList("SELECT id FROM voice WHERE engine_voice_id = ?", engineVoiceId);
-        if (voices.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid voice ID."));
-        }
-        Long voiceId = ((Number) voices.get(0).get("id")).longValue();
+        // ── Resolve voice ────────────────────────────────────────────────────
+        List<Map<String, Object>> voices = jdbcTemplate.queryForList(
+                "SELECT id FROM voice WHERE engine_voice_id = ?", voiceIdParam);
+        Long voiceDbId = voices.isEmpty() ? 1L : ((Number) voices.get(0).get("id")).longValue();
 
-        Long genId = dashboardRepository.createGeneration(userId, projectId, voiceId, text, text.length());
+        Long genId = dashboardRepository.createGeneration(userId, projectId, voiceDbId, text, text.length());
 
         try {
-            byte[] audioBytes = supertonicClient.synthesize(text, engineVoiceId, "hi", 1.0, 8);
-            
+            // ── Call TTS service ─────────────────────────────────────────────
+            byte[] audioBytes = supertonicClient.synthesize(text, voiceIdParam, lang, speed, totalSteps);
+
+            // ── Save to disk ─────────────────────────────────────────────────
             File dir = new File(audioDir, userId.toString());
             if (!dir.exists()) dir.mkdirs();
             File audioFile = new File(dir, genId + ".wav");
-            
             try (FileOutputStream fos = new FileOutputStream(audioFile)) {
                 fos.write(audioBytes);
             }
-            
-            dashboardRepository.updateGenerationSuccess(genId, audioFile.getAbsolutePath(), 0.0); // duration mocked for now
+            dashboardRepository.updateGenerationSuccess(genId, audioFile.getAbsolutePath(), 0.0);
             dashboardRepository.upsertUsage(userId, text.length());
-            
-            return ResponseEntity.ok(Map.of("id", genId, "status", "success"));
+
+            // ── Return WAV bytes directly — zero JSON serialisation ──────────
+            // Angular gets this as responseType:'blob', creates an Object URL and plays it.
+            // The generation ID travels in X-Generation-Id header for future reference.
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("audio/wav"));
+            headers.setContentLength(audioBytes.length);
+            headers.set("X-Generation-Id", String.valueOf(genId));
+            headers.set("Access-Control-Expose-Headers", "X-Generation-Id");
+
+            return new ResponseEntity<>(audioBytes, headers, HttpStatus.OK);
+
         } catch (SupertonicClient.EngineUnreachableException e) {
-            log.warn("TTS generation failed: {}", e.getMessage());
+            log.warn("TTS engine unreachable: {}", e.getMessage());
             dashboardRepository.updateGenerationFailed(genId);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "The voice engine seems to be asleep right now — try again in a moment."));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         } catch (Exception e) {
-            log.error("TTS generation failed with unexpected error", e);
+            log.error("TTS generation failed", e);
             dashboardRepository.updateGenerationFailed(genId);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "An unexpected error occurred during synthesis."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -111,24 +139,22 @@ public class GenerationController {
         Long userId = getUserId(auth);
         Optional<String> path = dashboardRepository.getGenerationAudioPath(userId, id);
         if (path.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 if they don't own it or it doesn't exist
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         File file = new File(path.get());
         if (!file.exists()) {
             return ResponseEntity.notFound().build();
         }
-        
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("audio/wav"));
         headers.setContentLength(file.length());
-        
         return new ResponseEntity<>(new FileSystemResource(file), headers, HttpStatus.OK);
     }
-    
+
     @PostMapping("/{id}/like")
     public ResponseEntity<?> toggleLike(Authentication auth, @PathVariable Long id) {
         Long userId = getUserId(auth);
         dashboardRepository.toggleGenerationLike(userId, id);
-        return ResponseEntity.ok(Map.of("status", "success"));
+        return ResponseEntity.ok().build();
     }
 }
