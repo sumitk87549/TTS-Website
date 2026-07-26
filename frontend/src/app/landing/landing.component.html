@@ -8,6 +8,8 @@
       </a>
       <div class="nav-links">
         <a routerLink="/about">About</a>
+        <a href="#languages">Languages</a>
+        <a href="#faq">FAQ</a>
         <a routerLink="/contact">Contact</a>
       </div>
       <div class="nav-actions">
@@ -25,6 +27,8 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" [class.open]="mobileMenuOpen">
       <a routerLink="/about" (click)="mobileMenuOpen = false">About</a>
+      <a href="#languages" (click)="mobileMenuOpen = false">Languages</a>
+      <a href="#faq" (click)="mobileMenuOpen = false">FAQ</a>
       <a routerLink="/contact" (click)="mobileMenuOpen = false">Contact</a>
       <a routerLink="/login" (click)="mobileMenuOpen = false">Log In</a>
       <a routerLink="/signup" (click)="mobileMenuOpen = false" class="mobile-register-link">Register</a>
@@ -45,8 +49,8 @@
         <div class="hero-badge free">✨ Fully Free</div>
         <div class="hero-badge beta">Public Beta</div>
       </div>
-      <h1>Turn text into <span class="gradient-text">natural Hindi voice</span> — instantly.</h1>
-      <p class="hero-subtitle">Studio-quality voiceovers for your Reels, ads, podcasts & stories. No credit card. No sign-up to try.</p>
+      <h1>Free Hindi, English & Hinglish <span class="gradient-text">text to speech</span> AI voice generator</h1>
+      <p class="hero-subtitle">Convert Hindi (हिंदी), English India and Hinglish text into natural Indian AI voiceovers for YouTube, Reels, ads, podcasts, education and accessibility. No credit card. No sign-up to try.</p>
       <div class="hero-cta-row">
         <a routerLink="/studio" class="btn-hero-primary" id="hero-start-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -229,6 +233,46 @@
         <h4>Storytelling</h4>
         <p>Narrate family stories or content with warmth and emotion.</p>
       </div>
+    </div>
+  </section>
+
+
+  <!-- ═══ SEO Language Landing Blocks ═══ -->
+  <section class="seo-content-section" id="languages">
+    <div class="section-tag">Languages & accents</div>
+    <h2 class="section-title">Hindi text to speech made for real Indian creators</h2>
+    <div class="seo-copy-grid">
+      <article class="seo-copy-card">
+        <h3>Hindi AI voice generator</h3>
+        <p>Paste Devanagari Hindi text and generate clear, natural speech for stories, explainers, devotional content, news reads, lessons and social media videos.</p>
+      </article>
+      <article class="seo-copy-card">
+        <h3>Hinglish text to voice</h3>
+        <p>Write Hindi in English letters like “namaste dosto” and create voiceovers that fit Indian scripts, creator captions and everyday conversational content.</p>
+      </article>
+      <article class="seo-copy-card">
+        <h3>English India TTS</h3>
+        <p>Create Indian-accent friendly English voiceovers for product demos, tutorials, customer messages, educational videos and business announcements.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="faq-section" id="faq">
+    <div class="section-tag">FAQ</div>
+    <h2 class="section-title">Text to speech questions creators search for</h2>
+    <div class="faq-list">
+      <details open>
+        <summary>Can I convert Hindi text to speech for free?</summary>
+        <p>Yes. words2voice lets you try Hindi text-to-speech generation free during public beta, with no credit card required.</p>
+      </details>
+      <details>
+        <summary>Does words2voice support Hinglish?</summary>
+        <p>Yes. You can enter Hindi in Devanagari or Roman letters, making it useful for Hinglish scripts used in Shorts, Reels and ads.</p>
+      </details>
+      <details>
+        <summary>What can I make with AI text to speech?</summary>
+        <p>You can generate voiceovers for YouTube videos, Instagram Reels, podcasts, audiobooks, lessons, product ads, business greetings and accessibility features.</p>
+      </details>
     </div>
   </section>
 

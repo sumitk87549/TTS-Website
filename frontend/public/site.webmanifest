@@ -1,0 +1,12 @@
+{
+  "name": "words2voice - Hindi Text to Speech",
+  "short_name": "words2voice",
+  "description": "Free Hindi, English and Hinglish AI text-to-speech voice generator for Indian creators.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "lang": "en-IN",
+  "categories": ["productivity", "music", "utilities"],
+  "icons": [{ "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
+}
