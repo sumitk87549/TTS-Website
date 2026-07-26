@@ -1,4 +1,4 @@
-# Voisetu — Hindi/Hinglish TTS Platform
+# Words2Voice — Hindi/Hinglish TTS Platform
 
 A full-stack TTS web app: **Angular** frontend → **Spring Boot** backend → **FastAPI TTS service** (Supertonic-3 on-device).
 
