@@ -1,0 +1,492 @@
+# Words2Voice Commercial PROD Improvement Plan
+
+> Goal: make the Hindi/English/Hinglish TTS web app feel like a premium, trustworthy, fast, and customer-caring product while giving the owner a simple but powerful business/operations view.
+
+## 1. Current app understanding
+
+### Architecture
+- **Frontend:** Angular app on port 4200 with landing/about/contact/auth/dashboard/studio/projects/history/settings routes.
+- **Backend:** Spring Boot API on port 8080 with JWT auth, PostgreSQL persistence, admin stats, usage limits, voice catalogue, project/history endpoints, and proxy calls to the Python TTS engine.
+- **TTS service:** FastAPI service on port 8000 using Supertonic-3, exposing `/health`, `/voices`, and `/synthesize`, returning WAV bytes and synthesis metadata headers.
+
+### Important current behaviors
+- Studio sends a blocking `POST /api/tts/generate` request and waits for a WAV blob before showing the audio player.
+- Python already returns useful headers: `X-Audio-Duration` and `X-Synthesis-Time`, but the Spring endpoint and Angular UI do not fully use them for live progress, ETA, or analytics.
+- The database already tracks users, projects, generations, daily usage, contact messages, and interest signals.
+- Admin currently has only high-level totals: total users, successful generations, total characters, and payment-interest breakdown.
+- The UI already has a premium direction: dark/day theme tokens, voice cards, settings accordion, script presets, and audio download.
+
+---
+
+## 2. Top product priorities
+
+| Priority | Upgrade | Why it matters | Implementation size |
+|---|---|---|---|
+| P0 | Reliable audio readiness after generation | Fixes the current issue where audio may not appear until another UI action triggers change detection | Small/Medium |
+| P0 | Job-based generation with status polling or SSE | Allows ETA, live processing states, resilient retries, and instant audio availability once ready | Medium |
+| P0 | Privacy-safe analytics and admin dashboard | Gives owner commercial visibility without making the app slow or creepy | Medium |
+| P1 | Premium processing dashboard | Keeps users engaged during slow TTS; makes waiting feel intentional | Medium |
+| P1 | UI/UX polish and clearer messaging | Improves trust, conversion, and perceived quality | Medium |
+| P1 | Better error/retry states | Makes failures feel handled professionally | Small |
+| P2 | Performance instrumentation and ops health | Helps owner understand commercial readiness and bottlenecks | Medium |
+
+---
+
+## 3. Critical fix: make generated audio appear immediately
+
+### Problem
+The studio currently posts to `/tts/generate`, receives a blob, creates an object URL, and sets `audioUrl`. If Angular does not immediately refresh the view, the audio player can remain hidden until another action triggers UI change detection.
+
+### Recommended simple fix
+1. Convert the studio component to use explicit reactive state for generation result:
+   - `generationState: 'idle' | 'queued' | 'processing' | 'ready' | 'failed'`
+   - `audioUrl: string | null`
+   - `lastGenerationId: number | null`
+2. After the blob is received:
+   - create the object URL,
+   - set state to `ready`,
+   - call `cdr.detectChanges()` instead of only `markForCheck()` for this critical result path,
+   - scroll/focus the audio card with `ViewChild` so users notice it.
+3. Bind audio player with `[attr.src]` or set the native audio element source directly after `detectChanges()` if needed.
+4. Add `loadedmetadata`, `canplay`, and `error` handlers to show explicit audio readiness.
+
+### Best implementation pattern
+```ts
+this.audioUrl = URL.createObjectURL(blob);
+this.generationState = 'ready';
+this.cdr.detectChanges();
+queueMicrotask(() => this.audioPlayer?.nativeElement?.load());
+```
+
+### Acceptance criteria
+- After every successful generation, the audio card appears without requiring theme toggle, navigation, or any extra click.
+- The audio player shows a loading shimmer until `canplay` fires.
+- The download button is disabled until the browser confirms the blob is playable.
+
+---
+
+## 4. Premium generation experience: “Mission Control” processing panel
+
+Instead of a generic spinner, show a cinematic but useful dashboard while synthesis is running.
+
+### User-facing concept
+Name it something like:
+- **Voice Forge**
+- **Synthesis Mission Control**
+- **Audio Reactor**
+- **Studio Engine Room**
+
+### What users should see while waiting
+1. **ETA range:** “Estimated wait: 18–35 seconds”
+2. **Live stages:**
+   - Script received
+   - Language mode selected
+   - Voice profile loaded
+   - Acoustic tokens rendering
+   - Waveform encoding
+   - Final audio preparing
+3. **Text facts:** character count, estimated spoken duration, selected voice, language, speed, quality.
+4. **Premium animation:** animated waveform, circular reactor, or voiceprint lines.
+5. **Helpful microcopy:** short changing messages:
+   - “Tuning pronunciation for Hindi + English mix…”
+   - “Building natural pauses…”
+   - “Encoding your WAV file…”
+6. **Queue confidence:** “Do not refresh — your audio will appear automatically.”
+7. **Cancel option:** user can cancel if job-based generation is implemented.
+
+### Simple ETA calculation
+Use heuristics until real telemetry is available:
+```text
+estimatedSeconds = base + (characters * charFactor * qualityFactor)
+qualityFactor:
+Draft=0.55, Standard=1.0, High=1.8, Ultra=3.5
+base = 4 seconds
+```
+Then improve it with production data:
+- store actual synthesis time by chars, voice, language, quality,
+- calculate p50/p90 ETA per quality bucket,
+- show “Usually ready in 22 sec” after enough samples.
+
+### UI implementation notes
+- Create `GenerationMissionControlComponent` in Angular.
+- Inputs: text length, selected voice, language, speed, quality, elapsed seconds, estimated seconds, backend job status.
+- Use CSS-only animation first. Avoid heavy canvas/WebGL unless needed.
+- Respect `prefers-reduced-motion`.
+
+---
+
+## 5. Recommended backend flow: job-based generation
+
+The biggest architectural upgrade is to stop making the user wait on one blocking HTTP blob request.
+
+### New API design
+```http
+POST /api/tts/jobs
+Response: { "jobId": 123, "status": "queued", "estimatedSeconds": 24 }
+
+GET /api/tts/jobs/{jobId}
+Response: {
+  "jobId": 123,
+  "status": "processing",
+  "stage": "waveform_encoding",
+  "progress": 72,
+  "estimatedSeconds": 24,
+  "elapsedSeconds": 18,
+  "audioUrl": null
+}
+
+GET /api/tts/jobs/{jobId}/audio
+Response: audio/wav
+```
+
+### Simple implementation option
+- Spring creates a `generation` row with `pending`.
+- Spring submits work to an async executor.
+- Angular polls every 1–2 seconds.
+- When Python returns WAV, Spring saves the file and marks `success`.
+- Angular sees `success` and immediately loads `/api/tts/jobs/{id}/audio`.
+
+### Better implementation option
+Use **Server-Sent Events (SSE)**:
+```http
+GET /api/tts/jobs/{jobId}/events
+```
+Events:
+```json
+{ "status": "processing", "stage": "voice_loaded", "progress": 35 }
+{ "status": "success", "audioUrl": "/api/tts/jobs/123/audio" }
+```
+
+### Why this fixes multiple issues
+- Audio can appear as soon as backend marks the file ready.
+- Refreshing the page can resume the latest job status.
+- Admin can see queued/processing/success/failed counts.
+- The UI can show truthful progress instead of fake spinner-only progress.
+
+---
+
+## 6. Analytics and admin reporting plan
+
+Important: analytics should be **transparent, privacy-safe, and disclosed in a privacy policy/banner**. Avoid covert tracking. For a commercial product, trust is a feature. Track product usage and performance, not sensitive personal surveillance.
+
+### What to track
+
+#### Visit/session analytics
+- Anonymous visitor ID.
+- Session ID.
+- First page, referrer, UTM params.
+- Device category, browser, OS, viewport size.
+- Country/region from IP if needed, but do not store raw IP long-term; store hashed/truncated IP.
+- Page views and route changes.
+- Session start/end and duration.
+
+#### Funnel analytics
+- Landing page viewed.
+- Signup started/completed.
+- Studio opened.
+- Voice selected.
+- Preview clicked.
+- Text pasted/typed.
+- Generate clicked.
+- Generation succeeded/failed.
+- Audio played.
+- Audio downloaded.
+- User returned later.
+
+#### TTS-specific analytics
+- Text length.
+- Language mode: Hindi/English/Auto.
+- Detected script mix: Devanagari only, Latin only, mixed.
+- Voice ID and gender.
+- Quality steps.
+- Speed.
+- Estimated duration.
+- Actual audio duration.
+- Backend synthesis time.
+- End-to-end UI wait time.
+- Error category.
+- Retry count.
+
+#### Business analytics
+- Daily active users.
+- New signups.
+- Activation rate: signup → first generation.
+- Successful generations per user.
+- Downloads per generation.
+- Top voices.
+- Top language mode.
+- Most used quality mode.
+- Character volume per day.
+- Cost proxy: total TTS seconds generated and CPU time.
+- Power users and inactive users.
+- Contact form trends.
+- Payment interest signals.
+
+### Data model proposal
+Add these tables:
+
+```sql
+analytics_session (
+  id BIGSERIAL PRIMARY KEY,
+  anonymous_id UUID NOT NULL,
+  user_id BIGINT NULL,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ended_at TIMESTAMPTZ,
+  landing_path TEXT,
+  referrer TEXT,
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  device_type VARCHAR(30),
+  browser VARCHAR(80),
+  os VARCHAR(80),
+  country_code VARCHAR(5),
+  ip_hash VARCHAR(128)
+);
+
+analytics_event (
+  id BIGSERIAL PRIMARY KEY,
+  session_id BIGINT REFERENCES analytics_session(id) ON DELETE SET NULL,
+  user_id BIGINT NULL,
+  event_name VARCHAR(80) NOT NULL,
+  route TEXT,
+  properties JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+synthesis_metric (
+  id BIGSERIAL PRIMARY KEY,
+  generation_id BIGINT REFERENCES generation(id) ON DELETE CASCADE,
+  queue_ms INT,
+  backend_ms INT,
+  tts_engine_ms INT,
+  total_ui_wait_ms INT,
+  audio_duration_seconds NUMERIC(8,2),
+  bytes_generated INT,
+  error_code VARCHAR(80),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+### Simple tracking implementation
+- Angular service: `AnalyticsService.track(eventName, properties)`.
+- Batch events every 5–10 seconds or on `visibilitychange` using `navigator.sendBeacon()`.
+- Backend endpoint: `POST /api/analytics/events`.
+- Use `localStorage` for anonymous ID.
+- Attach authenticated `user_id` server-side when JWT exists.
+- Never store full raw typed text in analytics events. For generation records, consider storing text because history requires it, but add a clear setting: “Save my scripts in history”.
+
+### Minimal admin dashboard pages
+1. **Overview**
+   - DAU/WAU/MAU
+   - new users
+   - successful generations
+   - total characters
+   - total audio minutes
+   - success rate
+   - p50/p90 generation time
+2. **Funnel**
+   - visit → signup → studio → generate → play → download
+3. **TTS quality/performance**
+   - success/failure by voice, quality, language
+   - average time per 100 chars
+   - slowest generations
+   - current engine health
+4. **Users**
+   - top users by generations/chars
+   - recent active users
+   - retention cohorts
+5. **Content/product insights**
+   - top voices
+   - Hindi vs English vs Hinglish split
+   - average script length
+   - most selected quality
+6. **Feedback & leads**
+   - contact messages
+   - interest-signal comments
+   - potential paid users
+
+### Keep it simple
+Do not add a heavy third-party analytics stack initially. Build a first-party analytics table and admin UI because:
+- it works with existing Spring/PostgreSQL,
+- it is deployable by the Vibe-coder quickly,
+- it allows TTS-specific reporting that generic tools miss.
+
+---
+
+## 7. UI/UX upgrade plan
+
+### Brand positioning
+Current product names vary between “Words2Voice” and “Voisetu”. Pick one primary brand and use it everywhere.
+
+Recommended positioning:
+> “Natural Hindi, English & Hinglish voice generation — fast, free, and studio-ready.”
+
+### Visual system improvements
+- Keep premium dark mode, but reduce excessive neon glow for readability.
+- Use one primary accent, one success accent, and one warm Indian accent.
+- Add consistent spacing scale: 4, 8, 12, 16, 24, 32, 48.
+- Add shared components: button, card, badge, empty state, toast, modal, metric tile.
+- Improve mobile layout for studio: text first, voice as horizontal carousel, sticky generate button.
+
+### Studio UX improvements
+- Put primary action near the text area and keep the bottom sticky button.
+- Show “estimated spoken duration” before generation.
+- Show “quality vs speed” tradeoff clearly.
+- Default quality should probably be **Standard** or **High**, not Ultra, because Ultra can feel slow for first-time users.
+- Add a “Fast preview” mode for first generation, then upsell/encourage High quality after trust is built.
+- Add sample text chips by use case: YouTube intro, ad, audiobook, reels, meditation, news, educational.
+- Add “clear text”, “paste”, and “count words” utilities.
+- Add autosave draft to localStorage.
+- Add “recent voices” and “favorite voice”.
+
+### Voice picker improvements
+- Voice cards should communicate personality better:
+  - Best for: Storytelling / Ads / News / Calm narration.
+  - Tone: Warm / Professional / Youthful / Expressive.
+  - Language fit: Hindi / English / Hinglish.
+- Cache short preview audio per voice so repeated preview clicks do not hit TTS engine every time.
+- Add a “compare voices” mini-mode: generate same one-line sample for 2–3 voices.
+
+### Result card improvements
+- Replace simple player with a premium result card:
+  - waveform preview,
+  - duration,
+  - generated time,
+  - file size,
+  - voice settings used,
+  - download button,
+  - regenerate button,
+  - save to project,
+  - thumbs up/down feedback.
+- Show a toast: “Audio ready — autoplay started” or “Audio ready — click play”.
+- If autoplay is blocked by the browser, show a friendly play CTA.
+
+### Error states
+Use friendly, actionable messages:
+- Engine offline: “Voice engine is warming up. Try again in 30 seconds.”
+- Rate limited: “You have used today’s free limit. Come back tomorrow or shorten your script.”
+- Validation: “Your script is too long for one generation. Split it into smaller parts.”
+- Timeout: “This took longer than expected. We saved the job and will show it in History if it completes.”
+
+---
+
+## 8. Landing page and conversion improvements
+
+### Above-the-fold
+- One-line promise: “Convert Hindi, English & Hinglish text into natural speech.”
+- Primary CTA: “Start creating free”.
+- Secondary CTA: “Hear samples”.
+- Add live sample player cards for 3 voices.
+- Add trust copy: “No credit card. Works with Hindi + Hinglish. Download WAV.”
+
+### Explain clearly
+Sections:
+1. Write your script.
+2. Choose a voice.
+3. Generate and download.
+4. Use for reels, lessons, narration, announcements, and prototypes.
+
+### Business/freeware strategy
+Even if it remains free, capture signals:
+- “Would you pay for longer scripts, MP3 export, voice cloning, or commercial license?”
+- Ask after a successful download, not before.
+- Keep it optional and non-intrusive.
+
+---
+
+## 9. Performance and scalability plan
+
+### Frontend
+- Lazy-load authenticated feature routes.
+- Add skeletons for voices/projects/history.
+- Cache voice catalogue.
+- Compress images and remove unused assets.
+- Use Angular build budgets.
+- Add web vitals tracking: LCP, INP, CLS.
+
+### Backend
+- Job queue for TTS requests.
+- Set timeouts and retries between Spring and Python.
+- Store Python response headers in `synthesis_metric`.
+- Add `/api/health` with DB and TTS service status.
+- Add structured logs with request ID, session ID, user ID.
+- Add indexes on analytics and generation tables.
+
+### TTS service
+- Add `/estimate` endpoint or internal estimator.
+- Add model warm status and queue depth to `/health`.
+- Return JSON error codes, not only text.
+- Log request ID passed from Spring.
+- Consider pre-warming and keeping the model loaded.
+
+---
+
+## 10. Security, privacy, and compliance
+
+### Must-have for production trust
+- Add Privacy Policy and Terms pages.
+- Disclose analytics and script history behavior.
+- Provide account deletion and data deletion (partially present already).
+- Do not silently collect more personal data than needed.
+- Hash/truncate IPs.
+- Add rate limits server-side with Redis or DB if multiple backend instances are used.
+- Do not store passwords or tokens in analytics properties.
+- Avoid storing full user journey as “hidden surveillance”; present it as product analytics and keep sensitive fields out.
+
+### Script text handling
+Because TTS scripts can be private:
+- Default: save generation history for logged-in users.
+- Add setting: “Save my scripts in history: on/off”.
+- For analytics, store length/language/features, not raw text.
+
+---
+
+## 11. Suggested implementation roadmap for Vibe-coder
+
+### Sprint 1: Reliability and premium waiting experience
+- Fix immediate audio visibility with stronger change detection and audio readiness events.
+- Add `GenerationMissionControlComponent` with ETA, stages, and elapsed time.
+- Add better result card with waveform placeholder, metadata, retry, download.
+- Default quality to Standard or High.
+
+### Sprint 2: Job-based TTS
+- Add `POST /api/tts/jobs` and `GET /api/tts/jobs/{id}`.
+- Add async executor in Spring.
+- Store generation status transitions and audio paths.
+- Angular polls job status and loads audio URL when ready.
+- Add cancel/retry where possible.
+
+### Sprint 3: First-party analytics
+- Add analytics tables.
+- Add Angular analytics service with batched sendBeacon.
+- Track page views, funnel events, generation events, play/download events.
+- Add metrics capture for synthesis timings.
+
+### Sprint 4: Admin reporting
+- Build `/admin` route guarded by `is_admin`.
+- Add overview, funnel, TTS performance, users, feedback tabs.
+- Add CSV export for generations/contact/interest leads.
+- Add date filters: today, 7 days, 30 days, custom.
+
+### Sprint 5: UI polish and commercial readiness
+- Harmonize brand naming.
+- Improve landing page sample demos.
+- Add responsive studio layout.
+- Add privacy/terms pages.
+- Add production health page and uptime checks.
+
+---
+
+## 12. Definition of “premium app” done
+
+The app should be considered commercially ready when:
+- Users always see clear progress after clicking Generate.
+- Audio appears automatically and reliably when ready.
+- Wait time feels informative, not broken.
+- Admin can answer: who is using it, how often, where users drop, which voices are popular, how slow generation is, and why failures happen.
+- The landing page communicates the value within 5 seconds.
+- The app has privacy-safe analytics and clear data disclosure.
+- Mobile studio is comfortable to use.
+- Backend and TTS engine expose health and performance metrics.
+- The UI feels consistent, polished, and trustworthy.
