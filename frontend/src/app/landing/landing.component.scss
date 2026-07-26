@@ -995,3 +995,60 @@
   .cta-card { padding: 2.5rem 1.5rem; }
   .footer { padding: 2rem 1.5rem 1.5rem; }
 }
+
+/* ── SEO content ── */
+.seo-content-section,
+.faq-section {
+  padding: 4.5rem 2.5rem;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.seo-copy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 2rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.seo-copy-card,
+.faq-list details {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.seo-copy-card h3 {
+  margin: 0 0 0.75rem;
+  color: var(--text-primary);
+}
+
+.seo-copy-card p,
+.faq-list p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.faq-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.faq-list summary {
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: 700;
+  list-style-position: inside;
+}
+
+.faq-list details p {
+  margin-top: 0.75rem;
+}

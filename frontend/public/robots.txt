@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /settings
+Disallow: /history
+Disallow: /projects
+
+Sitemap: https://words2voice.in/sitemap.xml
