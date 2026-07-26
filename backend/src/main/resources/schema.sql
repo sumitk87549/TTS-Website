@@ -61,4 +61,44 @@ CREATE TABLE IF NOT EXISTS interest_signal (
     comment             TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
 ALTER TABLE generation ADD COLUMN IF NOT EXISTS is_liked BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE generation ADD COLUMN IF NOT EXISTS stage VARCHAR(50) DEFAULT 'completed';
+ALTER TABLE generation ADD COLUMN IF NOT EXISTS estimated_seconds INT;
+ALTER TABLE generation ADD COLUMN IF NOT EXISTS synthesis_ms BIGINT;
+
+CREATE TABLE IF NOT EXISTS analytics_session (
+    id              BIGSERIAL PRIMARY KEY,
+    session_id      VARCHAR(100) NOT NULL UNIQUE,
+    anonymous_id    VARCHAR(100) NOT NULL,
+    user_id         BIGINT REFERENCES app_user(id) ON DELETE SET NULL,
+    ip_hash         VARCHAR(64),
+    device_type     VARCHAR(20),
+    browser         VARCHAR(50),
+    referrer        VARCHAR(500),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS analytics_event (
+    id              BIGSERIAL PRIMARY KEY,
+    session_id      VARCHAR(100) NOT NULL REFERENCES analytics_session(session_id) ON DELETE CASCADE,
+    event_name      VARCHAR(100) NOT NULL,
+    route           VARCHAR(255),
+    properties      JSONB,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_event_name ON analytics_event(event_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_event_created_at ON analytics_event(created_at);
+
+CREATE TABLE IF NOT EXISTS synthesis_metric (
+    id              BIGSERIAL PRIMARY KEY,
+    generation_id   BIGINT REFERENCES generation(id) ON DELETE CASCADE,
+    voice_id        VARCHAR(50) NOT NULL,
+    char_count      INT NOT NULL,
+    quality_steps   INT,
+    speed           NUMERIC(3,2),
+    synthesis_ms    BIGINT,
+    rtf             NUMERIC(6,3),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);

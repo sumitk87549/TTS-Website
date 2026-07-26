@@ -1,0 +1,211 @@
+<div class="admin-container">
+  <div class="admin-header">
+    <div class="admin-title-row">
+      <div class="admin-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Admin Dashboard
+      </div>
+      <button class="refresh-btn" (click)="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="admin-error" *ngIf="error">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    {{ error }}
+  </div>
+
+  <!-- Loading -->
+  <div class="admin-loading" *ngIf="loading && !error">
+    <span class="loading-spinner"></span>
+    Loading dashboard data…
+  </div>
+
+  <div *ngIf="!loading && !error">
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab" [class.active]="activeTab === 'overview'"   (click)="setTab('overview')">📊 Overview</button>
+      <button class="admin-tab" [class.active]="activeTab === 'voices'"     (click)="setTab('voices')">🎤 Voices</button>
+      <button class="admin-tab" [class.active]="activeTab === 'users'"      (click)="setTab('users')">👥 Users</button>
+      <button class="admin-tab" [class.active]="activeTab === 'daily'"      (click)="setTab('daily')">📅 Daily</button>
+      <button class="admin-tab" [class.active]="activeTab === 'contacts'"   (click)="setTab('contacts')">✉️ Contacts</button>
+      <button class="admin-tab" [class.active]="activeTab === 'analytics'"  (click)="setTab('analytics')">📈 Analytics</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div *ngIf="activeTab === 'overview'">
+      <div class="metric-grid">
+        <div class="metric-card">
+          <span class="metric-value">{{ stats.totalUsers | number }}</span>
+          <span class="metric-label">Total Users</span>
+        </div>
+        <div class="metric-card accent">
+          <span class="metric-value">{{ stats.totalGenerations | number }}</span>
+          <span class="metric-label">Successful Generations</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value">{{ (stats.totalCharacters / 1000000 | number:'1.1-1') }}M</span>
+          <span class="metric-label">Total Characters</span>
+        </div>
+        <div class="metric-card teal">
+          <span class="metric-value">{{ stats.todayGenerations | number }}</span>
+          <span class="metric-label">Today's Generations</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value">{{ stats.todayActiveUsers | number }}</span>
+          <span class="metric-label">Today's Active Users</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value">{{ successRate }}</span>
+          <span class="metric-label">Success Rate</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value">{{ stats.avgGenerationTimeSec?.toFixed(1) }}s</span>
+          <span class="metric-label">Avg Gen Time</span>
+        </div>
+        <div class="metric-card danger">
+          <span class="metric-value">{{ stats.failedGenerations | number }}</span>
+          <span class="metric-label">Failed Generations</span>
+        </div>
+      </div>
+
+      <!-- Interest Signal Breakdown -->
+      <div class="admin-section" *ngIf="stats.interestBreakdown?.length > 0">
+        <div class="section-heading">Willingness to Pay Survey</div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Response</th><th>Count</th><th>Avg Price (₹)</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of stats.interestBreakdown">
+              <td>{{ row.would_pay }}</td>
+              <td>{{ row.count | number }}</td>
+              <td>{{ row.avg_price ? '₹' + row.avg_price : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Voices Tab -->
+    <div *ngIf="activeTab === 'voices'">
+      <div class="admin-section">
+        <div class="section-heading">Top Voices by Usage</div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>#</th><th>Voice</th><th>ID</th><th>Generations</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of topVoices; let i = index">
+              <td class="rank">{{ i + 1 }}</td>
+              <td><strong>{{ v.display_name }}</strong></td>
+              <td class="mono">{{ v.engine_voice_id }}</td>
+              <td>{{ v.gen_count | number }}</td>
+            </tr>
+            <tr *ngIf="topVoices.length === 0">
+              <td colspan="4" class="empty-row">No generation data yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Users Tab -->
+    <div *ngIf="activeTab === 'users'">
+      <div class="admin-section">
+        <div class="section-heading">Recent Users (last 50)</div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Joined</th><th>Generations</th><th>Total Chars</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of recentUsers">
+              <td class="mono">{{ u.id }}</td>
+              <td>{{ u.display_name }}</td>
+              <td class="mono small">{{ u.email }}</td>
+              <td class="small">{{ u.created_at | date:'mediumDate' }}</td>
+              <td>{{ u.generation_count | number }}</td>
+              <td>{{ u.total_chars | number }}</td>
+            </tr>
+            <tr *ngIf="recentUsers.length === 0">
+              <td colspan="6" class="empty-row">No users yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Daily Stats Tab -->
+    <div *ngIf="activeTab === 'daily'">
+      <div class="admin-section">
+        <div class="section-heading">Daily Stats (last 30 days)</div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Date</th><th>Generations</th><th>Unique Users</th><th>Characters</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of dailyStats">
+              <td>{{ d.day | date:'mediumDate' }}</td>
+              <td>{{ d.generations | number }}</td>
+              <td>{{ d.unique_users | number }}</td>
+              <td>{{ d.total_chars | number }}</td>
+            </tr>
+            <tr *ngIf="dailyStats.length === 0">
+              <td colspan="4" class="empty-row">No activity in last 30 days.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Contacts Tab -->
+    <div *ngIf="activeTab === 'contacts'">
+      <div class="admin-section">
+        <div class="section-heading">Contact Messages (last 100)</div>
+        <div class="contact-list">
+          <div class="contact-card" *ngFor="let c of contacts">
+            <div class="contact-header">
+              <strong>{{ c.name }}</strong>
+              <span class="mono small">{{ c.email }}</span>
+              <span class="contact-date small">{{ c.created_at | date:'medium' }}</span>
+            </div>
+            <p class="contact-message">{{ c.message }}</p>
+          </div>
+          <div class="empty-row" *ngIf="contacts.length === 0">No messages yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div *ngIf="activeTab === 'analytics'">
+      <div class="metric-grid small">
+        <div class="metric-card accent">
+          <span class="metric-value">{{ analyticsSummary.totalEvents7d | number }}</span>
+          <span class="metric-label">Events (7 days)</span>
+        </div>
+        <div class="metric-card teal">
+          <span class="metric-value">{{ analyticsSummary.uniqueVisitors7d | number }}</span>
+          <span class="metric-label">Unique Visitors (7d)</span>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="section-heading">Top Events (7 days)</div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Event</th><th>Count</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of analyticsSummary.eventCounts">
+              <td class="mono">{{ e.event_name }}</td>
+              <td>{{ e.count | number }}</td>
+            </tr>
+            <tr *ngIf="!analyticsSummary.eventCounts?.length">
+              <td colspan="2" class="empty-row">No analytics events yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>

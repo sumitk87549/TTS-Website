@@ -87,6 +87,14 @@
           rows="4">
         </textarea>
       </div>
+      
+      <!-- Quick Start Samples -->
+      <div class="landing-samples">
+        <span class="sample-label">Try:</span>
+        <button class="sample-chip" (click)="textToSynthesize = 'नमस्ते, आप कैसे हैं? मुझे आपकी आवाज़ में कुछ सुनना है।'">Casual Greeting</button>
+        <button class="sample-chip" (click)="textToSynthesize = 'आज की ताजा खबर! दिल्ली में मौसम का मिजाज बदला।'">News Style</button>
+        <button class="sample-chip" (click)="textToSynthesize = 'इस शानदार प्रोडक्ट को आज ही खरीदें, लिंक डिस्क्रिप्शन में है।'">Promo</button>
+      </div>
       <div class="demo-controls">
         <div class="voice-select-wrap">
           <select [(ngModel)]="selectedVoiceId" id="voice-select">
@@ -139,6 +147,29 @@
     <div class="stat-item">
       <span class="stat-number">{{ voices.length }}</span>
       <span class="stat-label">Voice Models</span>
+    </div>
+  </section>
+
+  <!-- ═══ How It Works ═══ -->
+  <section class="how-it-works-section">
+    <div class="section-tag">How It Works</div>
+    <h2 class="section-title">From text to voice in <span class="gradient-text">3 easy steps</span></h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Type or Paste</h3>
+        <p>Enter your Hindi or Hinglish script into the studio editor.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>Choose a Voice</h3>
+        <p>Select from our growing library of authentic Indian voices.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Generate & Download</h3>
+        <p>Get a high-quality WAV audio file ready for your project instantly.</p>
+      </div>
     </div>
   </section>
 
@@ -227,6 +258,8 @@
         <a routerLink="/contact">Contact</a>
         <a routerLink="/login">Login</a>
         <a routerLink="/signup">Register</a>
+        <a routerLink="/privacy">Privacy</a>
+        <a routerLink="/terms">Terms</a>
       </nav>
     </div>
     <div class="footer-bottom">

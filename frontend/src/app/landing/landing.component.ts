@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { ThemeService } from '../core/theme/theme.service';
+import { AnalyticsService } from '../core/analytics/analytics.service';
 
 @Component({
   selector: 'app-landing',
@@ -19,6 +20,7 @@ export class LandingComponent implements OnInit {
   private http = inject(HttpClient);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
+  private analytics = inject(AnalyticsService);
 
   voices: any[] = [];
   selectedVoiceId = '';
@@ -73,6 +75,8 @@ export class LandingComponent implements OnInit {
       this.errorMessage = 'Text is too long.';
       return;
     }
+
+    this.analytics.track('preview_listen_clicked', { textLength: this.textLength, voiceId: this.selectedVoiceId });
 
     this.isLoading = true;
     this.errorMessage = null;

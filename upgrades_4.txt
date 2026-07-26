@@ -1,0 +1,609 @@
+################################################################################
+#  WORDS2VOICE — PRODUCTION UPGRADE PLAN (Part 4 of 5)
+#  UI/UX POLISH, COLOR SYSTEM, LANDING PAGE, RESPONSIVE DESIGN
+################################################################################
+#
+#  This part covers:
+#  A) Color system audit — fixing text visibility in both themes
+#  B) Landing page improvements for conversion
+#  C) Voice picker UX upgrade
+#  D) Error states with friendly, actionable messages
+#  E) Toast notification system
+#  F) Mobile responsive fixes
+#  G) About/Contact/Footer page polish
+#
+#  CRITICAL RULE FOR AI CODERS:
+#  ┌──────────────────────────────────────────────────────────────────┐
+#  │  NEVER hardcode colors. ALWAYS use CSS custom properties.       │
+#  │  ALWAYS test visibility in BOTH night mode AND day mode.        │
+#  │  Text on dark backgrounds: use var(--text-primary) = light      │
+#  │  Text on light backgrounds: use var(--text-primary) = dark      │
+#  │  The CSS variables auto-switch. Trust the design system.        │
+#  │  When placing text on a colored/gradient background (like       │
+#  │  buttons), use #fff or #000 explicitly — NOT var(--text-*)      │
+#  └──────────────────────────────────────────────────────────────────┘
+################################################################################
+
+
+================================================================================
+SECTION 11: COLOR SYSTEM AUDIT & FIXES
+================================================================================
+
+FILE: frontend/src/styles.scss
+
+The current design system is solid. Here are targeted fixes:
+
+11A. ENSURE TEXT CONTRAST IN DAY MODE
+─────────────────────────────────────
+The day mode has these potential issues:
+  - --text-muted (#9896b0) can be too light on --bg-surface (#ffffff)
+  - Accent colors on light bg need enough contrast
+
+CHANGE in [data-theme="day"] section:
+  BEFORE: --text-muted: #9896b0;
+  AFTER:  --text-muted: #6b698a;
+
+  (This darkens the muted text for better readability in day mode)
+
+11B. ADD EXPLICIT TEXT-ON-ACCENT VARIABLES
+──────────────────────────────────────────
+ADD to both :root and [data-theme="day"]:
+
+  In :root / [data-theme="night"]:
+    --text-on-accent: #ffffff;
+    --text-on-saffron: #ffffff;
+    --text-on-success: #ffffff;
+    --text-on-danger: #ffffff;
+
+  In [data-theme="day"]:
+    --text-on-accent: #ffffff;
+    --text-on-saffron: #ffffff;
+    --text-on-success: #ffffff;
+    --text-on-danger: #ffffff;
+
+USE var(--text-on-accent) whenever placing text on top of accent-colored
+backgrounds (buttons, badges, etc.) instead of hardcoded #fff.
+
+11C. ADD TOAST NOTIFICATION KEYFRAME
+────────────────────────────────────
+ADD to styles.scss keyframes section:
+
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes toast-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  }
+
+
+================================================================================
+SECTION 12: LANDING PAGE IMPROVEMENTS
+================================================================================
+
+12A. IMPROVE HERO SECTION COPY
+──────────────────────────────
+FILE: frontend/src/app/landing/landing.component.html
+
+CHANGE the h1 (line 48):
+  BEFORE:
+    <h1>Turn text into <span class="gradient-text">natural Hindi voice</span> — instantly.</h1>
+  AFTER:
+    <h1>Convert text to <span class="gradient-text">natural Hindi speech</span> — free, fast, studio-ready.</h1>
+
+CHANGE the hero-subtitle (line 49):
+  BEFORE:
+    Studio-quality voiceovers for your Reels, ads, podcasts & stories. No credit card. No sign-up to try.
+  AFTER:
+    Generate professional Hindi, English & Hinglish voiceovers in seconds. No credit card. No sign-up needed. Download WAV instantly.
+
+12B. ADD "HEAR SAMPLES" SECTION
+───────────────────────────────
+The landing page already has a live demo section. ADD above it, a simple
+voice samples row so users can hear voices WITHOUT typing anything.
+
+FILE: frontend/src/app/landing/landing.component.html
+
+ADD after the hero section (after line 70, before <!-- ═══ Live Demo ═══ -->):
+
+  <!-- ═══ Voice Samples ═══ -->
+  <section class="samples-section" id="samples">
+    <div class="section-tag">Hear Our Voices</div>
+    <h2 class="section-title">Choose from <span class="gradient-text">{{ voices.length }} natural voices</span></h2>
+    <div class="samples-grid">
+      <div class="sample-card" *ngFor="let voice of voices.slice(0, 6)">
+        <div class="sample-avatar" [class.female]="voice.gender === 'female'">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          </svg>
+        </div>
+        <div class="sample-info">
+          <span class="sample-name">{{ voice.display_name }}</span>
+          <span class="sample-style">{{ voice.style_tag }}</span>
+        </div>
+        <span class="sample-gender-badge">{{ voice.gender === 'male' ? '♂' : '♀' }}</span>
+      </div>
+    </div>
+  </section>
+
+FILE: frontend/src/app/landing/landing.component.scss
+
+ADD:
+  .samples-section {
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+
+  .samples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    max-width: 900px;
+    margin: 2rem auto 0;
+  }
+
+  .sample-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+    cursor: default;
+
+    &:hover {
+      border-color: var(--accent-glow);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  .sample-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+
+    &.female {
+      background: var(--accent-rose-subtle);
+      color: var(--accent-rose);
+    }
+  }
+
+  .sample-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sample-name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+  }
+
+  .sample-style {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  .sample-gender-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+
+12C. IMPROVE USE CASES SECTION
+─────────────────────────────
+FILE: frontend/src/app/landing/landing.component.html
+
+ADD two more use case cards inside .use-cases-grid (after the Storytelling card):
+
+  <div class="use-case-card">
+    <div class="uc-icon">🎓</div>
+    <h4>Education & E-Learning</h4>
+    <p>Create clear Hindi narrations for online courses, tutorials, and study materials.</p>
+  </div>
+  <div class="use-case-card">
+    <div class="uc-icon">🧘</div>
+    <h4>Meditation & Wellness</h4>
+    <p>Soothing guided meditations and affirmations in calm, natural Hindi voice.</p>
+  </div>
+  <div class="use-case-card">
+    <div class="uc-icon">📢</div>
+    <h4>Announcements</h4>
+    <p>Professional audio announcements for shops, offices, events, and public spaces.</p>
+  </div>
+
+
+12D. ADD "HOW IT WORKS" SECTION
+───────────────────────────────
+FILE: frontend/src/app/landing/landing.component.html
+
+ADD after features section, before use-cases-section:
+
+  <!-- ═══ How It Works ═══ -->
+  <section class="how-section">
+    <div class="section-tag">How It Works</div>
+    <h2 class="section-title">Three steps to your voiceover</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h4>Write Your Script</h4>
+        <p>Type or paste your text in Hindi, English, or Hinglish. Our AI handles all three perfectly.</p>
+      </div>
+      <div class="step-connector">→</div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h4>Choose a Voice</h4>
+        <p>Pick from 10 natural voices — male and female, each with unique personality and tone.</p>
+      </div>
+      <div class="step-connector">→</div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h4>Generate & Download</h4>
+        <p>Click generate, listen to your audio, and download the WAV file. Ready to use anywhere.</p>
+      </div>
+    </div>
+  </section>
+
+FILE: frontend/src/app/landing/landing.component.scss
+
+ADD:
+  .how-section {
+    padding: 5rem 2rem;
+    text-align: center;
+  }
+
+  .steps-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 900px;
+    margin: 2.5rem auto 0;
+    flex-wrap: wrap;
+  }
+
+  .step-card {
+    flex: 1;
+    min-width: 200px;
+    max-width: 260px;
+    padding: 2rem 1.5rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    text-align: center;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    h4 {
+      margin: 0.75rem 0 0.5rem;
+      color: var(--text-primary);
+    }
+
+    p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+  }
+
+  .step-number {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--gradient-violet);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 auto;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .step-connector {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    opacity: 0.4;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .steps-grid { flex-direction: column; }
+    .step-connector { transform: rotate(90deg); }
+  }
+
+
+12E. FOOTER IMPROVEMENTS
+────────────────────────
+FILE: frontend/src/app/landing/landing.component.html
+
+ADD Privacy and Terms links in footer-nav (around line 228):
+  <a routerLink="/privacy">Privacy Policy</a>
+  <a routerLink="/terms">Terms of Use</a>
+
+
+================================================================================
+SECTION 13: VOICE PICKER IMPROVEMENTS
+================================================================================
+
+13A. ADD VOICE PERSONALITY TAGS
+──────────────────────────────
+The voice cards already show style_tag and description. To make voices
+feel more personal, add "Best for" tags.
+
+FILE: frontend/src/app/features/studio/studio.component.ts
+
+ADD a mapping after the voice fetch:
+  readonly voiceUseCases: Record<string, string> = {
+    'M1': 'Best for: Narration, News',
+    'M2': 'Best for: Storytelling, Ads',
+    'M3': 'Best for: YouTube, Reels',
+    'M4': 'Best for: Announcements, Corporate',
+    'M5': 'Best for: Casual, Social Media',
+    'F1': 'Best for: Storytelling, Audiobooks',
+    'F2': 'Best for: Presentations, Business',
+    'F3': 'Best for: YouTube, Reels',
+    'F4': 'Best for: Social Media, Ads',
+    'F5': 'Best for: Meditation, Wellness',
+  };
+
+FILE: frontend/src/app/features/studio/studio.component.html
+
+ADD after voice-desc div (line 190), inside voice-card:
+  <div class="voice-usecase" *ngIf="voiceUseCases[v.engine_voice_id]">
+    {{ voiceUseCases[v.engine_voice_id] }}
+  </div>
+
+FILE: frontend/src/app/features/studio/studio.component.scss
+
+ADD:
+  .voice-usecase {
+    font-size: 0.65rem;
+    color: var(--accent-teal);
+    font-weight: 600;
+    margin-top: 0.2rem;
+    letter-spacing: 0.02em;
+  }
+
+
+================================================================================
+SECTION 14: TOAST NOTIFICATION SYSTEM
+================================================================================
+
+Create a simple toast service for success/error notifications.
+
+Create NEW file: frontend/src/app/core/toast/toast.service.ts
+
+import { Injectable, signal } from '@angular/core';
+
+export interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+  duration: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ToastService {
+  private _id = 0;
+  readonly toasts = signal<Toast[]>([]);
+
+  show(message: string, type: 'success' | 'error' | 'info' = 'info', duration = 4000) {
+    const id = ++this._id;
+    const toast: Toast = { id, message, type, duration };
+    this.toasts.update(t => [...t, toast]);
+
+    setTimeout(() => {
+      this.toasts.update(t => t.filter(x => x.id !== id));
+    }, duration);
+  }
+
+  success(message: string) { this.show(message, 'success'); }
+  error(message: string) { this.show(message, 'error', 6000); }
+  info(message: string) { this.show(message, 'info'); }
+}
+
+Create NEW file: frontend/src/app/core/toast/toast.component.ts
+
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ToastService } from './toast.service';
+
+@Component({
+  selector: 'app-toast',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="toast-container">
+      <div *ngFor="let t of toastService.toasts()"
+           class="toast-item"
+           [class.success]="t.type === 'success'"
+           [class.error]="t.type === 'error'"
+           [class.info]="t.type === 'info'">
+        <span class="toast-icon">
+          {{ t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : 'ℹ' }}
+        </span>
+        {{ t.message }}
+      </div>
+    </div>
+  `,
+  styles: [`
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 380px;
+    }
+
+    .toast-item {
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: toast-in 0.3s ease-out;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-lg);
+
+      &.success {
+        background: var(--success-subtle);
+        color: var(--success);
+        border: 1px solid var(--success);
+      }
+      &.error {
+        background: var(--danger-subtle);
+        color: var(--danger);
+        border: 1px solid var(--danger);
+      }
+      &.info {
+        background: var(--accent-subtle);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+    }
+
+    .toast-icon {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .success .toast-icon { background: var(--success); color: #fff; }
+    .error .toast-icon { background: var(--danger); color: #fff; }
+    .info .toast-icon { background: var(--accent); color: #fff; }
+  `]
+})
+export class ToastComponent {
+  toastService = inject(ToastService);
+}
+
+INTEGRATE INTO APP:
+FILE: frontend/src/app/app.html
+
+  BEFORE: <router-outlet></router-outlet>
+  AFTER:
+    <router-outlet></router-outlet>
+    <app-toast></app-toast>
+
+FILE: frontend/src/app/app.ts
+
+  ADD imports:
+    import { ToastComponent } from './core/toast/toast.component';
+
+  ADD to @Component imports array:
+    imports: [RouterOutlet, ToastComponent],
+
+USE IN STUDIO — after successful generation:
+  inject ToastService and call:
+    this.toast.success('Audio ready — click play to listen!');
+
+USE IN STUDIO — after download click:
+    this.toast.info('Download started');
+
+
+================================================================================
+SECTION 15: MOBILE RESPONSIVE FIXES
+================================================================================
+
+15A. LANDING PAGE MOBILE
+────────────────────────
+FILE: frontend/src/app/landing/landing.component.scss
+
+ENSURE these responsive rules exist (add if missing):
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.75rem; }
+    .hero-subtitle { font-size: 0.95rem; }
+    .hero-cta-row { flex-direction: column; gap: 0.75rem; }
+    .hero-trust { flex-direction: column; gap: 0.5rem; }
+    .features-grid { grid-template-columns: 1fr; }
+    .use-cases-grid { grid-template-columns: 1fr; }
+    .samples-grid { grid-template-columns: 1fr 1fr; }
+    .demo-card { padding: 1.25rem; }
+    .cta-card { padding: 2rem 1.5rem; }
+    .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    .samples-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.5rem; }
+  }
+
+15B. STUDIO MOBILE — STICKY GENERATE BUTTON
+───────────────────────────────────────────
+FILE: frontend/src/app/features/studio/studio.component.scss
+
+ADD/ENSURE at bottom of responsive section:
+
+  @media (max-width: 768px) {
+    .bottom-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-surface);
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+      margin: 0 -1rem -1rem;
+      z-index: 10;
+    }
+  }
+
+
+================================================================================
+SECTION 16: PRIVACY POLICY & TERMS PAGES (Stub)
+================================================================================
+
+Create two simple page components. Content can be placeholder text
+that the owner fills in later, but the routes must exist.
+
+FILE: frontend/src/app/app.routes.ts
+
+ADD two lazy-loaded routes before the wildcard redirect:
+  { path: 'privacy', loadComponent: () => import('./privacy/privacy.component').then(m => m.PrivacyComponent) },
+  { path: 'terms', loadComponent: () => import('./terms/terms.component').then(m => m.TermsComponent) },
+
+Create NEW files:
+  frontend/src/app/privacy/privacy.component.ts
+  frontend/src/app/terms/terms.component.ts
+
+Each should be a simple standalone component with a page of text
+styled using the design system variables. Include:
+  - What data is collected (analytics events, not personal data)
+  - How generation history works (saved for logged-in users)
+  - Option to delete account and all data
+  - No data sold to third parties
+  - Contact email for privacy questions
+
+
+################################################################################
+# END OF PART 4
+# Next: upgrades_5.txt — Performance, security, deployment, final checklist
+################################################################################

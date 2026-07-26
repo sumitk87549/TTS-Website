@@ -17,6 +17,10 @@
   --text-primary: #f0f0f8;
   --text-secondary: #9898b0;
   --text-muted: #505065;
+  --text-on-accent: #ffffff;
+  --text-on-saffron: #ffffff;
+  --text-on-success: #ffffff;
+  --text-on-danger: #ffffff;
   /* Primary accent - violet */
   --accent: #7c5cf7;
   --accent-hover: #9270ff;
@@ -73,7 +77,11 @@
   --border-strong: rgba(0, 0, 0, 0.13);
   --text-primary: #14131f;
   --text-secondary: #4a4869;
-  --text-muted: #9896b0;
+  --text-muted: #6b698a;
+  --text-on-accent: #ffffff;
+  --text-on-saffron: #ffffff;
+  --text-on-success: #ffffff;
+  --text-on-danger: #ffffff;
   --accent: #6c47e8;
   --accent-hover: #5535d6;
   --accent-glow: rgba(108, 71, 232, 0.18);
@@ -275,6 +283,43 @@ audio::-webkit-media-controls-panel {
 .india-pattern-bg {
   background-color: var(--bg-primary);
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff9933' fill-opacity='0.04'%3E%3Cpath d='M30 0 L32 28 L60 30 L32 32 L30 60 L28 32 L0 30 L28 28 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ── Skeleton Loading ── */
+.skeleton {
+  background: var(--bg-elevated);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.04) 20%,
+    rgba(255, 255, 255, 0.08) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 0.25rem;
+}
+
+[data-theme="day"] .skeleton {
+  background-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0.04) 20%,
+    rgba(0, 0, 0, 0.08) 60%,
+    rgba(0, 0, 0, 0)
+  );
+}
+
+.skeleton-text {
+  height: 1em;
+  margin-bottom: 0.5em;
+  width: 100%;
+}
+.skeleton-text:last-child { margin-bottom: 0; width: 80%; }
+
+.skeleton-card {
+  height: 120px;
+  border-radius: 0.75rem;
 }
 
 /* ── Responsive Breakpoints Reference ──

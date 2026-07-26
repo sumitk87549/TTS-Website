@@ -21,6 +21,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
 
   menuOpen = false;
+  isAdmin = false;
 
   // Avatar state
   avatarEmoji = '🎤';
@@ -49,6 +50,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.http.get<any>(`${environment.apiBaseUrl}/me`).subscribe(res => {
       if (res.displayName) {
         this.avatarName = res.displayName;
+      }
+      if (res.isAdmin) {
+        this.isAdmin = res.isAdmin;
       }
       this.cdr.markForCheck();
     });

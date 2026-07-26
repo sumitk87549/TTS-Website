@@ -1,0 +1,458 @@
+################################################################################
+#  WORDS2VOICE — PRODUCTION UPGRADE PLAN (Part 5 of 5)
+#  PERFORMANCE, SECURITY, HEALTH, DEPLOYMENT, FINAL CHECKLIST
+################################################################################
+#
+#  This part covers:
+#  A) Frontend performance (lazy loading, caching, skeletons)
+#  B) Backend health endpoint and structured logging
+#  C) TTS service improvements
+#  D) Security hardening
+#  E) Brand consistency cleanup
+#  F) index.html cleanup
+#  G) Complete implementation checklist
+################################################################################
+
+
+================================================================================
+SECTION 17: FRONTEND PERFORMANCE
+================================================================================
+
+17A. LAZY-LOAD AUTHENTICATED ROUTES
+───────────────────────────────────
+FILE: frontend/src/app/app.routes.ts
+
+Currently all components are eagerly imported. Change the authenticated
+feature routes to use lazy loading so the initial bundle stays small.
+
+REPLACE the dashboard children with lazy-loaded imports:
+
+  {
+    path: '',
+    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    canActivate: [authGuard],
+    children: [
+      { path: 'studio', loadComponent: () => import('./features/studio/studio.component').then(m => m.StudioComponent) },
+      { path: 'projects', loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent) },
+      { path: 'voice-lab', loadComponent: () => import('./features/voice-lab/voice-lab.component').then(m => m.VoiceLabComponent) },
+      { path: 'history', loadComponent: () => import('./features/history/history.component').then(m => m.HistoryComponent) },
+      { path: 'settings', loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent) },
+      { path: 'admin', loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent) },
+    ]
+  },
+
+ALSO lazy-load login/signup:
+  { path: 'login', loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent) },
+  { path: 'signup', loadComponent: () => import('./features/auth/signup/signup.component').then(m => m.SignupComponent) },
+
+REMOVE all the direct import statements at the top of app.routes.ts that
+are now lazy-loaded. Keep only: Routes, LandingComponent, AboutComponent,
+ContactComponent, authGuard.
+
+17B. CACHE VOICE CATALOGUE
+──────────────────────────
+The voice list doesn't change between requests. Cache it to avoid
+redundant API calls.
+
+FILE: frontend/src/app/features/studio/studio.component.ts
+
+ADD a static cache:
+  private static _voiceCache: Voice[] | null = null;
+
+CHANGE fetchVoices():
+  fetchVoices() {
+    // Use cache if available
+    if (StudioComponent._voiceCache) {
+      this.applyVoices(StudioComponent._voiceCache);
+      return;
+    }
+
+    this.http.get<Voice[]>(`${environment.apiBaseUrl}/voices`).subscribe({
+      next: res => {
+        const voices = (res || []).map(v => ({
+          ...v,
+          display_name: v.display_name.replace(/^(M|F)\d+\s*-\s*/i, '')
+        }));
+        StudioComponent._voiceCache = voices;
+        this.applyVoices(voices);
+      },
+      error: () => {}
+    });
+  }
+
+  private applyVoices(voices: Voice[]) {
+    this.voices = voices;
+    this.maleVoices = voices.filter(v => v.gender === 'male');
+    this.femaleVoices = voices.filter(v => v.gender === 'female');
+    if (!this.selectedVoice && this.maleVoices.length > 0) {
+      this.selectVoice(this.maleVoices[0]);
+    }
+    this.cdr.detectChanges();
+  }
+
+17C. ADD SKELETON LOADING STATES
+────────────────────────────────
+Add a CSS shimmer class for loading states across components.
+
+FILE: frontend/src/styles.scss
+
+ADD:
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--bg-elevated) 0%,
+      var(--bg-hover) 50%,
+      var(--bg-elevated) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 0.5rem;
+  }
+
+  .skeleton-text {
+    height: 1em;
+    width: 60%;
+    margin-bottom: 0.5rem;
+  }
+
+  .skeleton-card {
+    height: 80px;
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+
+Use these classes in voice picker, history, and projects when data is loading:
+  <div class="skeleton skeleton-card" *ngFor="let _ of [1,2,3,4,5]"></div>
+
+Show skeleton cards while voices are loading in the studio voice picker.
+
+
+================================================================================
+SECTION 18: BACKEND HEALTH ENDPOINT
+================================================================================
+
+Create a comprehensive health check that reports:
+- Database connectivity
+- TTS engine status
+- Uptime
+
+Create NEW file: backend/src/main/java/com/voisetu/backend/HealthController.java
+
+package com.voisetu.backend;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.lang.management.ManagementFactory;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/public")
+public class HealthController {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final TtsEngineManager engineManager;
+
+    public HealthController(JdbcTemplate jdbcTemplate, TtsEngineManager engineManager) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.engineManager = engineManager;
+    }
+
+    @GetMapping("/health")
+    public Map<String, Object> health() {
+        boolean dbOk = false;
+        try {
+            jdbcTemplate.queryForObject("SELECT 1", Integer.class);
+            dbOk = true;
+        } catch (Exception e) {
+            // DB unreachable
+        }
+
+        boolean ttsOk = engineManager.isEngineReachable();
+
+        long uptimeMs = ManagementFactory.getRuntimeMXBean().getUptime();
+        long uptimeMinutes = uptimeMs / 60000;
+
+        String status = (dbOk && ttsOk) ? "healthy" : "degraded";
+
+        return Map.of(
+            "status", status,
+            "database", dbOk ? "connected" : "unreachable",
+            "ttsEngine", ttsOk ? "ready" : "offline",
+            "uptimeMinutes", uptimeMinutes,
+            "version", "1.0.0"
+        );
+    }
+}
+
+FILE: backend/src/main/java/com/voisetu/backend/TtsEngineManager.java
+
+If this file does not have an isEngineReachable() method, ADD:
+
+  public boolean isEngineReachable() {
+      try {
+          // Quick HTTP GET to /health on the TTS service
+          java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+              .uri(java.net.URI.create(baseUrl + "/health"))
+              .timeout(java.time.Duration.ofSeconds(3))
+              .GET().build();
+          java.net.http.HttpResponse<String> response =
+              java.net.http.HttpClient.newHttpClient()
+                  .send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+          return response.statusCode() == 200;
+      } catch (Exception e) {
+          return false;
+      }
+  }
+
+NOTE: If TtsEngineManager doesn't exist as a separate class, add this
+method to SupertonicClient.java instead and inject SupertonicClient
+into HealthController.
+
+
+================================================================================
+SECTION 19: SECURITY HARDENING
+================================================================================
+
+19A. RATE LIMITING IMPROVEMENTS
+──────────────────────────────
+FILE: backend/src/main/java/com/voisetu/backend/TtsController.java
+
+The current rate limiter allows 5 requests per IP per hour.
+This is fine for preview. Make sure the authenticated generation
+endpoint (GenerationController) also has clear rate limit responses.
+
+19B. DON'T EXPOSE STACK TRACES
+─────────────────────────────
+Ensure Spring Boot does not send stack traces in error responses.
+
+FILE: backend/src/main/resources/application.yml
+
+ADD:
+  server:
+    error:
+      include-stacktrace: never
+      include-message: always
+
+19C. ADD SECURITY HEADERS
+────────────────────────
+FILE: backend/src/main/java/com/voisetu/backend/SecurityConfig.java
+
+ADD inside filterChain method, before return:
+  http.headers(headers -> headers
+      .frameOptions(frame -> frame.deny())
+      .contentTypeOptions(content -> {})
+      .xssProtection(xss -> {})
+  );
+
+19D. SECURE JWT SECRET
+─────────────────────
+FILE: backend/src/main/resources/application.yml
+
+The current JWT secret is hardcoded. For production:
+  - Use an environment variable: ${JWT_SECRET:fallback-dev-key}
+  - The fallback only works in local dev profile
+
+CHANGE:
+  app:
+    jwt:
+      secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+
+
+================================================================================
+SECTION 20: BRAND CONSISTENCY
+================================================================================
+
+20A. USE "words2voice" EVERYWHERE
+────────────────────────────────
+Search all files for "Voisetu" or "voisetu" and replace user-facing text
+with "words2voice". Backend package names (com.voisetu) can stay — they
+don't face users.
+
+Places to check:
+  - index.html: title, meta descriptions ✓ (already words2voice)
+  - landing page: all mentions ✓
+  - dashboard sidebar: brand text ✓
+  - about page: any mentions of Voisetu
+  - TTS service main.py: FastAPI title (not user-facing, OK to keep)
+  - download filename in studio: "voisetu_audio.wav" → "words2voice_audio.wav"
+
+FILE: frontend/src/app/features/studio/studio.component.html
+  CHANGE: download="voisetu_audio.wav" → download="words2voice_audio.wav"
+
+FILE: tts-service/main.py
+  CHANGE line 198: filename=\"voisetu_audio.wav\" → filename=\"words2voice_audio.wav\"
+
+
+20B. CONSISTENT TAGLINE
+───────────────────────
+Use this tagline everywhere it makes sense:
+  "Natural Hindi, English & Hinglish voice generation — fast, free, and studio-ready."
+
+
+================================================================================
+SECTION 21: INDEX.HTML CLEANUP
+================================================================================
+
+FILE: frontend/src/index.html
+
+The file currently has DUPLICATE html documents and commented-out old code.
+Clean it up:
+
+1. Remove everything from line 22 onwards (the duplicate and commented code)
+2. Keep only the first clean <html> block (lines 1-21) BUT with the
+   SEO meta tags from the second block (lines 23-295)
+3. The final index.html should be a single valid HTML document with:
+   - All SEO meta tags
+   - All structured data (Schema.org JSON-LD)
+   - No duplicates
+   - No commented-out code
+
+
+================================================================================
+SECTION 22: TTS SERVICE IMPROVEMENTS
+================================================================================
+
+FILE: tts-service/main.py
+
+22A. ADD ESTIMATION ENDPOINT
+────────────────────────────
+ADD a new endpoint for estimating generation time:
+
+  @app.post("/estimate", summary="Estimate synthesis time")
+  async def estimate(req: SynthRequest):
+      base = 4.0
+      quality_factor = {1: 0.3, 4: 0.55, 8: 1.0, 16: 1.8, 32: 3.5}
+      factor = quality_factor.get(req.total_steps, 1.0)
+      estimated_seconds = base + (len(req.text) * 0.03 * factor)
+      return {
+          "estimated_seconds": round(estimated_seconds, 1),
+          "char_count": len(req.text),
+          "quality_steps": req.total_steps,
+      }
+
+22B. IMPROVE HEALTH ENDPOINT
+────────────────────────────
+CHANGE the /health endpoint to include more detail:
+
+  @app.get("/health", summary="Liveness check")
+  async def health():
+      engine_ok = tts_engine is not None
+      return {
+          "status": "ok" if engine_ok else "loading",
+          "engine": "supertonic-3",
+          "ready": engine_ok,
+          "voices_available": len(VOICE_CATALOGUE),
+          "uptime_seconds": int(time.time() - _start_time),
+      }
+
+ADD at module level (after app creation):
+  _start_time = time.time()
+
+
+================================================================================
+SECTION 23: COMPLETE IMPLEMENTATION CHECKLIST
+================================================================================
+
+Use this checklist to track progress. Implement in this order:
+
+SPRINT 1 — Reliability & Core UX (Parts 1 + 2)
+  [ ] Fix audio visibility (cdr.detectChanges everywhere)
+  [ ] Change default quality to Standard
+  [ ] Add estimated duration display
+  [ ] Add clear/paste buttons
+  [ ] Add sample text chips
+  [ ] Add autosave draft
+  [ ] Add improved result card with regenerate + metadata
+  [ ] Create Mission Control component
+  [ ] Integrate Mission Control into studio
+  [ ] Test: generate audio → appears immediately, no extra click needed
+  [ ] Test: both night and day mode, all text readable
+
+SPRINT 2 — Analytics & Admin (Part 3)
+  [ ] Add analytics database tables
+  [ ] Create Angular AnalyticsService
+  [ ] Integrate tracking in studio, landing, auth
+  [ ] Create backend AnalyticsController
+  [ ] Create backend admin endpoints
+  [ ] Create frontend AdminComponent
+  [ ] Add admin route and sidebar link
+  [ ] Test: admin dashboard loads with real data
+
+SPRINT 3 — UI Polish (Part 4)
+  [ ] Fix day mode text-muted contrast
+  [ ] Add text-on-accent CSS variables
+  [ ] Improve hero section copy
+  [ ] Add voice samples section on landing
+  [ ] Add "How It Works" section
+  [ ] Add more use case cards
+  [ ] Add voice personality tags in studio
+  [ ] Create Toast notification system
+  [ ] Integrate toasts after generation
+  [ ] Add Privacy and Terms pages
+  [ ] Mobile responsive fixes
+  [ ] Footer links update
+
+SPRINT 4 — Performance & Security (Part 5)
+  [ ] Lazy-load all authenticated routes
+  [ ] Cache voice catalogue
+  [ ] Add skeleton loading states
+  [ ] Create backend health endpoint
+  [ ] Add security headers
+  [ ] Externalize JWT secret
+  [ ] Suppress stack traces in prod
+  [ ] Clean up index.html duplicates
+  [ ] Brand consistency: words2voice everywhere
+  [ ] Add /estimate endpoint to TTS service
+  [ ] Improve TTS /health endpoint
+
+FINAL VERIFICATION
+  [ ] Run: ng build --configuration production (no errors)
+  [ ] Test: full flow — landing → signup → studio → generate → play → download
+  [ ] Test: night mode — all text visible, no blending
+  [ ] Test: day mode — all text visible, no blending
+  [ ] Test: mobile — studio usable, sticky generate button works
+  [ ] Test: admin dashboard — only visible to admin users
+  [ ] Test: analytics events appearing in database
+  [ ] Test: health endpoint returns all-green status
+
+
+================================================================================
+SECTION 24: DEFINITION OF "PRODUCTION READY"
+================================================================================
+
+The app is considered commercially launch-ready when:
+
+  ✓ Users always see clear progress after clicking Generate
+  ✓ Audio appears automatically and reliably when ready
+  ✓ Wait time feels informative, not broken (Mission Control)
+  ✓ Admin can answer: who's using it, how often, which voices popular
+  ✓ The landing page communicates value within 5 seconds
+  ✓ Privacy-safe analytics with clear disclosure
+  ✓ Mobile studio is comfortable to use
+  ✓ Backend and TTS engine expose health metrics
+  ✓ UI feels consistent, polished, and trustworthy
+  ✓ Error messages are friendly and actionable
+  ✓ Brand is consistent ("words2voice" everywhere)
+  ✓ Both night and day mode are fully readable
+  ✓ Download filenames say "words2voice"
+  ✓ No hardcoded colors — everything uses CSS variables
+  ✓ Privacy Policy and Terms pages exist
+
+
+################################################################################
+# END OF PART 5 — UPGRADE PLAN COMPLETE
+#
+# FILES SUMMARY:
+#   upgrades_1.txt → Critical bug fix + Studio UX
+#   upgrades_2.txt → Mission Control + Job-based backend
+#   upgrades_3.txt → Analytics + Admin dashboard
+#   upgrades_4.txt → UI/UX polish + Landing + Responsive
+#   upgrades_5.txt → Performance + Security + Deployment
+#
+# IMPLEMENTATION ORDER: 1 → 2 → 3 → 4 → 5
+# Each part can be implemented independently, but follow the order
+# for the smoothest experience.
+################################################################################

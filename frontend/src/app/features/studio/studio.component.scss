@@ -642,10 +642,13 @@
   border-radius: 0.875rem;
   padding: 1.25rem 1.5rem;
   animation: slide-up 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 
   .error-msg {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     color: var(--danger);
     font-size: 0.9rem;
@@ -655,55 +658,96 @@
     border-radius: 0.5rem;
   }
 
-  .loading-state {
+  .error-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: var(--accent);
-    font-weight: 600;
-    font-size: 0.9rem;
+    flex: 1;
+    flex-wrap: wrap;
+
+    .error-text { flex: 1; }
   }
 
-  .audio-player {
+  .retry-btn {
+    padding: 0.35rem 0.9rem;
+    background: var(--danger-subtle);
+    border: 1px solid var(--danger);
+    border-radius: 0.5rem;
+    color: var(--danger);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+  }
+
+  .audio-result-card {
     display: flex;
     flex-direction: column;
-    gap: 0.875rem;
+    gap: 0.75rem;
+    animation: slide-up 0.3s ease-out;
+  }
 
-    .audio-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.8rem;
+  .audio-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .generation-time {
+      font-size: 0.72rem;
       color: var(--text-muted);
-
-      .audio-ready-pill {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.2rem 0.7rem;
-        background: var(--success-subtle);
-        color: var(--success);
-        border-radius: 2rem;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-
-        .audio-ready-dot {
-          width: 6px;
-          height: 6px;
-          background: var(--success);
-          border-radius: 50%;
-          animation: wave-pulse 1.5s ease-in-out infinite;
-          flex-shrink: 0;
-        }
-      }
+      font-family: 'JetBrains Mono', monospace;
     }
+  }
 
-    .audio-row {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+  .audio-ready-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.7rem;
+    background: var(--success-subtle);
+    color: var(--success);
+    border-radius: 2rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+
+    .audio-ready-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: wave-pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
     }
+  }
+
+  .audio-result-meta {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+
+    .meta-chip {
+      padding: 0.15rem 0.55rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  }
+
+  .audio-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 
     audio {
       flex: 1;
@@ -711,29 +755,59 @@
       border-radius: 0.5rem;
       accent-color: var(--accent);
     }
+  }
 
-    .btn-download {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.6rem 1.1rem;
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-      text-decoration: none;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      font-size: 0.82rem;
-      border: 1px solid var(--border);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      white-space: nowrap;
+  .audio-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-      &:hover {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-        box-shadow: 0 0 16px var(--accent-glow);
-        transform: translateY(-1px);
-      }
+  .btn-download {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.1rem;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.82rem;
+    border: 1px solid var(--border);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 0 16px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+  }
+
+  .btn-regenerate {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.1rem;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    &:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-subtle);
     }
   }
 }
@@ -894,8 +968,115 @@
   .studio-container { padding: 1rem; gap: 1rem; }
   .top-bar { flex-direction: column; align-items: stretch; }
   .bottom-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-surface);
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    margin: 0 -1rem -1rem;
+    z-index: 10;
     flex-direction: column;
     .btn-generate { width: 100%; justify-content: center; }
   }
   .quality-group { grid-template-columns: repeat(2, 1fr); }
+  .sample-chips { display: none; } /* save space on mobile */
 }
+
+/* ── Text Stats Bar ── */
+.text-stats {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+
+    svg { opacity: 0.6; }
+  }
+}
+
+/* ── Editor Action Buttons ── */
+.editor-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.editor-action-btn {
+  padding: 0.2rem 0.6rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
+}
+
+/* ── Sample Chips ── */
+.sample-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0;
+
+  .sample-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.sample-chip {
+  padding: 0.3rem 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--accent-saffron);
+    color: var(--accent-saffron);
+    background: var(--accent-saffron-subtle);
+    transform: translateY(-1px);
+  }
+
+  &.random {
+    border-color: var(--accent);
+    color: var(--accent);
+    &:hover {
+      background: var(--accent-subtle);
+    }
+  }
+}
+
+/* ── Voice Use-case Tag ── */
+.voice-usecase {
+  font-size: 0.65rem;
+  color: var(--accent-teal);
+  font-weight: 600;
+  margin-top: 0.2rem;
+  letter-spacing: 0.02em;
+}
+

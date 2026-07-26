@@ -67,6 +67,7 @@ VOICE_ID_SET = {v["id"] for v in VOICE_CATALOGUE}
 
 # ── TTS Engine (lazy-loaded at startup) ───────────────────────────────────────
 tts_engine = None
+_start_time = time.time()
 
 def get_engine():
     global tts_engine
@@ -134,7 +135,18 @@ async def health():
         "status": "ok" if engine_ok else "loading",
         "engine": "supertonic-3",
         "ready": engine_ok,
+        "uptime_seconds": round(time.time() - _start_time, 1),
+        "voices_available": len(VOICE_CATALOGUE)
     }
+
+
+@app.post("/estimate", summary="Estimate generation time")
+async def estimate(req: SynthRequest):
+    base = 4
+    quality_factor = {4: 0.55, 8: 1.0, 16: 1.8, 32: 3.5}
+    factor = quality_factor.get(req.total_steps, 1.0)
+    seconds = int(base + (len(req.text) * 0.03 * factor))
+    return {"estimated_seconds": seconds}
 
 
 @app.get("/voices", summary="List available voice presets")
@@ -195,7 +207,7 @@ async def synthesize(req: SynthRequest):
         headers={
             "X-Audio-Duration": str(round(float(np.sum(duration)), 3)),
             "X-Synthesis-Time": str(round(elapsed, 3)),
-            "Content-Disposition": 'attachment; filename="voisetu_audio.wav"',
+            "Content-Disposition": 'attachment; filename="words2voice_audio.wav"',
         },
     )
 

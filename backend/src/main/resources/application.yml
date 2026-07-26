@@ -8,6 +8,10 @@ spring:
       mode: always
 
 ---
+server:
+  error:
+    include-stacktrace: never
+
 spring:
   config:
     activate:
@@ -23,7 +27,7 @@ supertonic:
     base-url: http://127.0.0.1:8000
 app:
   jwt:
-    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
     expiration-ms: 86400000
   storage:
     audio-dir: backend-data/audio

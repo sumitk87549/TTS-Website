@@ -57,6 +57,18 @@ public class TtsEngineManager implements SmartLifecycle {
         return running;
     }
 
+    public boolean isEngineReachable() {
+        try {
+            RestClient.create(baseUrl)
+                    .get().uri("/health")
+                    .retrieve()
+                    .toBodilessEntity();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @Override
     public int getPhase() {
         // Run after most beans are wired, but before web server starts taking traffic

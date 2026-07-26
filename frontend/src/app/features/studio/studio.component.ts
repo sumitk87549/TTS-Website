@@ -1,9 +1,12 @@
-import { Component, inject, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, NgZone, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { MissionControlComponent } from './mission-control.component';
+import { AnalyticsService } from '../../core/analytics/analytics.service';
+import { ToastService } from '../../core/toast/toast.service';
 
 interface Voice {
   id: number;
@@ -17,7 +20,7 @@ interface Voice {
 @Component({
   selector: 'app-studio',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MissionControlComponent],
   templateUrl: './studio.component.html',
   styleUrls: ['./studio.component.scss']
 })
@@ -25,6 +28,11 @@ export class StudioComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
+  private analytics = inject(AnalyticsService);
+  private toast = inject(ToastService);
+
+  // ── Audio element ref ─────────────────────────────────────────────────
+  @ViewChild('audioPlayerRef') audioPlayerRef!: ElementRef<HTMLAudioElement>;
 
   // ── Text ────────────────────────────────────────────────────────────
   text = '';
@@ -32,10 +40,27 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   // ── Voices ──────────────────────────────────────────────────────────
   voices: Voice[] = [];
-  maleVoices: Voice[] = [];
+  maleVoices: Voice[] = []
   femaleVoices: Voice[] = [];
   selectedTab: 'Male' | 'Female' | 'My Voices' = 'Male';
   selectedVoice: Voice | null = null;
+
+  // Static voice cache across component instances
+  private static _voiceCache: Voice[] | null = null;
+
+  // ── Voice use-case tags ───────────────────────────────────────────────
+  readonly voiceUseCases: Record<string, string> = {
+    'M1': 'Best for: Narration, News',
+    'M2': 'Best for: Storytelling, Ads',
+    'M3': 'Best for: YouTube, Reels',
+    'M4': 'Best for: Announcements, Corporate',
+    'M5': 'Best for: Casual, Social Media',
+    'F1': 'Best for: Storytelling, Audiobooks',
+    'F2': 'Best for: Presentations, Business',
+    'F3': 'Best for: YouTube, Reels',
+    'F4': 'Best for: Social Media, Ads',
+    'F5': 'Best for: Meditation, Wellness',
+  };
 
   // ── TTS Controls ────────────────────────────────────────────────────
   readonly langOptions = [
@@ -61,13 +86,17 @@ export class StudioComponent implements OnInit, OnDestroy {
     { steps: 16, label: 'High',     description: 'Rich voice quality' },
     { steps: 32, label: 'Ultra',    description: 'Studio-grade' },
   ];
-  // ★ Ultra is now the default
-  selectedQuality = this.qualityPresets[3];
+  // ★ Standard is the default (not Ultra — Ultra is too slow for first impression)
+  selectedQuality = this.qualityPresets[1];
 
   // ── Generation state ─────────────────────────────────────────────────
   generating = false;
   error = '';
   audioUrl: string | null = null;
+  generationState: 'idle' | 'processing' | 'ready' | 'failed' = 'idle';
+  generationStartTime = 0;
+  generationElapsedMs = 0;
+  private _elapsedTimer: ReturnType<typeof setInterval> | null = null;
 
   // ── Voice Preview state ──────────────────────────────────────────────
   previewLoadingId: string | null = null;
@@ -101,10 +130,49 @@ export class StudioComponent implements OnInit, OnDestroy {
     { label: 'English Business',  text: 'Good morning! Our quarterly results show a 28% growth in revenue. Let us walk through the key highlights.' },
   ];
 
+  // ── Computed getters ──────────────────────────────────────────────────
+
+  get charsPercent() { return Math.round((this.text.length / this.maxChars) * 100); }
+
+  get estimatedSpokenDuration(): string {
+    if (!this.text.trim()) return '';
+    const charRate = this.selectedLang === 'en' ? 16 : 14;
+    const seconds = Math.ceil(this.text.length / charRate / this.speed);
+    if (seconds < 60) return `~${seconds}s`;
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `~${min}m ${sec}s`;
+  }
+
+  get estimatedGenerationTime(): string {
+    if (!this.text.trim()) return '';
+    const base = 4;
+    const qualityFactor: Record<string, number> = {
+      'Draft': 0.55, 'Standard': 1.0, 'High': 1.8, 'Ultra': 3.5
+    };
+    const factor = qualityFactor[this.selectedQuality.label] || 1.0;
+    const seconds = Math.ceil(base + (this.text.length * 0.03 * factor));
+    return `~${seconds}s`;
+  }
+
+  get estimatedGenerationSeconds(): number {
+    const base = 4;
+    const qualityFactor: Record<string, number> = {
+      'Draft': 0.55, 'Standard': 1.0, 'High': 1.8, 'Ultra': 3.5
+    };
+    const factor = qualityFactor[this.selectedQuality.label] || 1.0;
+    return Math.ceil(base + (this.text.length * 0.03 * factor));
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────
   ngOnInit() {
     this.fetchVoices();
     this.fetchProjects();
+
+    // Restore draft
+    const savedDraft = localStorage.getItem('w2v-draft-text');
+    if (savedDraft) this.text = savedDraft;
+
     this._placeholderTimer = setInterval(() => {
       if (!this.text) {
         this._placeholderIdx = (this._placeholderIdx + 1) % this.placeholderExamples.length;
@@ -115,6 +183,7 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this._placeholderTimer) clearInterval(this._placeholderTimer);
+    if (this._elapsedTimer) clearInterval(this._elapsedTimer);
     if (this._previewAudio) {
       this._previewAudio.pause();
       this._previewAudio = null;
@@ -126,21 +195,63 @@ export class StudioComponent implements OnInit, OnDestroy {
     localStorage.setItem('w2v-seen-intro', '1');
   }
 
+  // ── Draft autosave ────────────────────────────────────────────────────
+  saveDraft() {
+    if (this.text.trim()) {
+      localStorage.setItem('w2v-draft-text', this.text);
+    } else {
+      localStorage.removeItem('w2v-draft-text');
+    }
+  }
+
+  // ── Utility buttons ───────────────────────────────────────────────────
+  clearText() {
+    this.text = '';
+    localStorage.removeItem('w2v-draft-text');
+    this.cdr.detectChanges();
+  }
+
+  async pasteFromClipboard() {
+    try {
+      const clipText = await navigator.clipboard.readText();
+      if (clipText) {
+        this.text = clipText.substring(0, this.maxChars);
+        this.saveDraft();
+        this.cdr.detectChanges();
+      }
+    } catch {
+      // Clipboard permission denied — ignore silently
+    }
+  }
+
+  // ── Voice fetching with cache ─────────────────────────────────────────
   fetchVoices() {
+    if (StudioComponent._voiceCache) {
+      this.applyVoices(StudioComponent._voiceCache);
+      return;
+    }
     this.http.get<Voice[]>(`${environment.apiBaseUrl}/voices`).subscribe({
       next: res => {
-        this.ngZone.run(() => {
-          this.voices = (res || []).map(v => ({
-            ...v,
-            display_name: v.display_name.replace(/^(M|F)\d+\s*-\s*/i, '')
-          }));
-          this.maleVoices   = this.voices.filter(v => v.gender === 'male');
-          this.femaleVoices = this.voices.filter(v => v.gender === 'female');
-          if (this.maleVoices.length > 0) this.selectVoice(this.maleVoices[0]);
-          this.cdr.markForCheck();
-        });
+        const voices = (res || []).map(v => ({
+          ...v,
+          display_name: v.display_name.replace(/^(M|F)\d+\s*-\s*/i, '')
+        }));
+        StudioComponent._voiceCache = voices;
+        this.applyVoices(voices);
       },
       error: () => {}
+    });
+  }
+
+  private applyVoices(voices: Voice[]) {
+    this.ngZone.run(() => {
+      this.voices = voices;
+      this.maleVoices   = voices.filter(v => v.gender === 'male');
+      this.femaleVoices = voices.filter(v => v.gender === 'female');
+      if (!this.selectedVoice && this.maleVoices.length > 0) {
+        this.selectVoice(this.maleVoices[0]);
+      }
+      this.cdr.detectChanges();
     });
   }
 
@@ -149,7 +260,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       next: res => {
         this.ngZone.run(() => {
           this.projects = res;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         });
       },
       error: () => {}
@@ -165,6 +276,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     if (hasHindi && hasLatin) this.selectedLang = 'na';
     else if (hasHindi)        this.selectedLang = 'hi';
     else                      this.selectedLang = 'en';
+    this.saveDraft();
   }
 
   tryRandomPreset() {
@@ -172,23 +284,19 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.applyPreset(this.scriptPresets[idx]);
   }
 
-  get charsPercent() { return Math.round((this.text.length / this.maxChars) * 100); }
-
   selectQuality(q: typeof this.qualityPresets[0]) { this.selectedQuality = q; }
   selectSpeed(s: number) { this.speed = s; }
   selectLang(l: string) { this.selectedLang = l; }
 
   // ── Voice Preview ──────────────────────────────────────────────────────
   playVoicePreview(v: Voice, event: MouseEvent) {
-    event.stopPropagation(); // Don't select the voice
+    event.stopPropagation();
 
-    // Stop any existing preview
     if (this._previewAudio) {
       this._previewAudio.pause();
       this._previewAudio = null;
     }
 
-    // If clicking the same voice that's playing, just stop
     if (this.previewPlayingId === v.engine_voice_id) {
       this.previewPlayingId = null;
       return;
@@ -196,6 +304,7 @@ export class StudioComponent implements OnInit, OnDestroy {
 
     this.previewLoadingId = v.engine_voice_id;
     this.previewPlayingId = null;
+    this.analytics.track('voice_previewed', { voiceId: v.engine_voice_id });
 
     const greeting = 'नमस्ते! मैं आपकी आवाज़ हूँ। कैसे हैं आप?';
 
@@ -210,13 +319,13 @@ export class StudioComponent implements OnInit, OnDestroy {
           this.previewPlayingId = v.engine_voice_id;
           const url = URL.createObjectURL(blob as Blob);
           this._previewAudio = new Audio(url);
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
           this._previewAudio.play();
           this._previewAudio.onended = () => {
             this.ngZone.run(() => {
               this.previewPlayingId = null;
               URL.revokeObjectURL(url);
-              this.cdr.markForCheck();
+              this.cdr.detectChanges();
             });
           };
         });
@@ -224,7 +333,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       error: () => {
         this.ngZone.run(() => {
           this.previewLoadingId = null;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         });
       }
     });
@@ -233,13 +342,36 @@ export class StudioComponent implements OnInit, OnDestroy {
   // ── Generate ──────────────────────────────────────────────────────────
   generate() {
     if (!this.text.trim() || !this.selectedVoice) return;
+
+    // Track analytics
+    this.analytics.track('generate_clicked', {
+      charCount: this.text.length,
+      voice: this.selectedVoice?.display_name,
+      voiceId: this.selectedVoice?.engine_voice_id,
+      quality: this.selectedQuality.label,
+      speed: this.speed,
+      lang: this.selectedLang,
+    });
+
+    // Reset state
+    this.generationState = 'processing';
     this.generating = true;
     this.error = '';
+    this.generationStartTime = Date.now();
+    this.generationElapsedMs = 0;
 
+    // Start elapsed timer
+    this._elapsedTimer = setInterval(() => {
+      this.generationElapsedMs = Date.now() - this.generationStartTime;
+      this.cdr.detectChanges();
+    }, 500);
+
+    // Revoke old blob
     if (this.audioUrl && this.audioUrl.startsWith('blob:')) {
       URL.revokeObjectURL(this.audioUrl);
     }
     this.audioUrl = null;
+    this.cdr.detectChanges(); // Force clear old audio
 
     this.http.post(
       `${environment.apiBaseUrl}/tts/generate`,
@@ -256,24 +388,69 @@ export class StudioComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (blob: Blob) => {
         this.ngZone.run(() => {
+          // Stop elapsed timer
+          if (this._elapsedTimer) { clearInterval(this._elapsedTimer); this._elapsedTimer = null; }
+
           this.audioUrl = URL.createObjectURL(blob);
           this.generating = false;
-          this.cdr.markForCheck();
+          this.generationState = 'ready';
+
+          // Track success
+          this.analytics.track('generate_success', {
+            charCount: this.text.length,
+            voice: this.selectedVoice?.display_name,
+            elapsedMs: this.generationElapsedMs,
+          });
+
+          // Clear draft after successful generation
+          localStorage.removeItem('w2v-draft-text');
+
+          // CRITICAL: Use detectChanges() not markForCheck() for zoneless
+          this.cdr.detectChanges();
+
+          // Force the audio element to load the new source
+          queueMicrotask(() => {
+            const audioEl = this.audioPlayerRef?.nativeElement;
+            if (audioEl) {
+              audioEl.load();
+              audioEl.play().catch(() => { /* autoplay blocked, fine */ });
+            }
+            this.cdr.detectChanges();
+          });
+
+          this.toast.success('Audio ready — click play to listen!');
         });
       },
       error: (err) => {
         this.ngZone.run(() => {
+          if (this._elapsedTimer) { clearInterval(this._elapsedTimer); this._elapsedTimer = null; }
+          this.generationState = 'failed';
+
+          this.analytics.track('generate_failed', {
+            errorStatus: err.status,
+            charCount: this.text.length,
+          });
+
           if (err.status === 429) {
-            this.error = 'Daily character limit reached. Resets tomorrow.';
+            this.error = "You've reached today's free limit (5,000 characters). Come back tomorrow — your limit resets at midnight.";
           } else if (err.status === 503) {
-            this.error = 'Voice engine is not running. Start tts-service/start-tts-service.sh first.';
+            this.error = 'Our voice engine is warming up. Please try again in about 30 seconds.';
+          } else if (err.status === 413) {
+            this.error = 'Your script is too long for one generation. Try splitting it into smaller parts.';
+          } else if (err.status === 0 || err.status >= 500) {
+            this.error = 'Something went wrong on our end. Please try again in a moment.';
           } else {
-            this.error = 'Failed to generate audio. Please try again.';
+            this.error = 'Generation failed. Please check your text and try again.';
           }
           this.generating = false;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges(); // CRITICAL: detectChanges not markForCheck
         });
       }
     });
+  }
+
+  trackDownload() {
+    this.analytics.track('audio_downloaded', { charCount: this.text.length });
+    this.toast.info('Download started');
   }
 }

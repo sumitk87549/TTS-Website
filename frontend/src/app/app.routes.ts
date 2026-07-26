@@ -1,33 +1,26 @@
 import { Routes } from '@angular/router';
 import { LandingComponent } from './landing/landing.component';
-import { AboutComponent } from './about/about.component';
-import { ContactComponent } from './contact/contact.component';
-import { LoginComponent } from './features/auth/login/login.component';
-import { SignupComponent } from './features/auth/signup/signup.component';
-import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { StudioComponent } from './features/studio/studio.component';
-import { ProjectsComponent } from './features/projects/projects.component';
-import { VoiceLabComponent } from './features/voice-lab/voice-lab.component';
-import { HistoryComponent } from './features/history/history.component';
-import { SettingsComponent } from './features/settings/settings.component';
 import { authGuard } from './core/auth/auth-guard';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
-  { path: 'about', component: AboutComponent },
-  { path: 'contact', component: ContactComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'signup', component: SignupComponent },
+  { path: 'about', loadComponent: () => import('./about/about.component').then(m => m.AboutComponent) },
+  { path: 'contact', loadComponent: () => import('./contact/contact.component').then(m => m.ContactComponent) },
+  { path: 'privacy', loadComponent: () => import('./privacy/privacy.component').then(m => m.PrivacyComponent) },
+  { path: 'terms', loadComponent: () => import('./terms/terms.component').then(m => m.TermsComponent) },
+  { path: 'login', loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent) },
+  { path: 'signup', loadComponent: () => import('./features/auth/signup/signup.component').then(m => m.SignupComponent) },
   {
     path: '',
-    component: DashboardComponent,
+    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard],
     children: [
-      { path: 'studio', component: StudioComponent },
-      { path: 'projects', component: ProjectsComponent },
-      { path: 'voice-lab', component: VoiceLabComponent },
-      { path: 'history', component: HistoryComponent },
-      { path: 'settings', component: SettingsComponent },
+      { path: 'studio', loadComponent: () => import('./features/studio/studio.component').then(m => m.StudioComponent) },
+      { path: 'projects', loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent) },
+      { path: 'voice-lab', loadComponent: () => import('./features/voice-lab/voice-lab.component').then(m => m.VoiceLabComponent) },
+      { path: 'history', loadComponent: () => import('./features/history/history.component').then(m => m.HistoryComponent) },
+      { path: 'settings', loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent) },
+      { path: 'admin', loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent) }
     ]
   },
   { path: '**', redirectTo: '' }

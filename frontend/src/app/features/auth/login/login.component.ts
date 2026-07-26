@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth';
+import { AnalyticsService } from '../../../core/analytics/analytics.service';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ import { AuthService } from '../../../core/auth/auth';
 export class LoginComponent {
   authService = inject(AuthService);
   router = inject(Router);
+  analytics = inject(AnalyticsService);
 
   email = '';
   password = '';
@@ -25,6 +27,7 @@ export class LoginComponent {
     this.error = '';
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
+        this.analytics.track('login_success');
         this.router.navigate(['/studio']);
       },
       error: (err) => {

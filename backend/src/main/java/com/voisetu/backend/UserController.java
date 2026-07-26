@@ -33,7 +33,8 @@ public class UserController {
         return Map.of(
             "email", user.email(),
             "displayName", user.displayName(),
-            "createdAt", user.createdAt()
+            "createdAt", user.createdAt(),
+            "isAdmin", user.isAdmin()
         );
     }
 
