@@ -2,10 +2,37 @@ spring:
   application:
     name: voisetu-backend
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
   sql:
     init:
       mode: always
+
+---
+spring:
+  config:
+    activate:
+      on-profile: default
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+supertonic:
+  engine:
+    base-url: ${TTS_SERVICE_URL}
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000
+  storage:
+    audio-dir: backend-data/audio
+  usage:
+    daily-limit: 5000
+    max-request-chars: 1000
 
 ---
 server:
@@ -25,9 +52,12 @@ spring:
 supertonic:
   engine:
     base-url: http://127.0.0.1:8000
+
 app:
+  frontend:
+    url: http://localhost:4200
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     expiration-ms: 86400000
   storage:
     audio-dir: backend-data/audio

@@ -24,6 +24,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
+from config import settings
+
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -40,7 +42,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # Spring Boot & Angular both access this
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",")],
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
