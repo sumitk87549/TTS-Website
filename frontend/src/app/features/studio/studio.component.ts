@@ -2,30 +2,24 @@ import { Component, inject, OnInit, OnDestroy, NgZone, ChangeDetectorRef, ViewCh
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
 import { MissionControlComponent } from './mission-control.component';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { ToastService } from '../../core/toast/toast.service';
-
-interface Voice {
-  id: number;
-  engine_voice_id: string;
-  display_name: string;
-  gender: string;
-  style_tag: string;
-  description?: string;
-}
+import { VoicePickerComponent } from './voice-picker/voice-picker.component';
+import { StudioApiService } from './services/studio-api.service';
+import { StudioEstimatorService } from './services/studio-estimator.service';
+import { GenerationState, ProjectSummary, QualityPreset, ScriptPreset, StudioLanguage, Voice } from './models/studio.models';
 
 @Component({
   selector: 'app-studio',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MissionControlComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MissionControlComponent, VoicePickerComponent],
   templateUrl: './studio.component.html',
   styleUrls: ['./studio.component.scss']
 })
 export class StudioComponent implements OnInit, OnDestroy {
-  private http = inject(HttpClient);
+  private studioApi = inject(StudioApiService);
+  private estimator = inject(StudioEstimatorService);
   private ngZone = inject(NgZone);
   private cdr = inject(ChangeDetectorRef);
   private analytics = inject(AnalyticsService);
@@ -44,9 +38,6 @@ export class StudioComponent implements OnInit, OnDestroy {
   femaleVoices: Voice[] = [];
   selectedTab: 'Male' | 'Female' | 'My Voices' = 'Male';
   selectedVoice: Voice | null = null;
-
-  // Static voice cache across component instances
-  private static _voiceCache: Voice[] | null = null;
 
   // ── Voice use-case tags ───────────────────────────────────────────────
   readonly voiceUseCases: Record<string, string> = {
@@ -68,7 +59,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     { value: 'hi',  label: '🇮🇳 Hindi' },
     { value: 'en',  label: '🇬🇧 English' },
   ];
-  selectedLang = 'na';
+  selectedLang: StudioLanguage = 'na';
 
   readonly speedPresets = [
     { value: 0.75, label: '0.75×' },
@@ -80,20 +71,20 @@ export class StudioComponent implements OnInit, OnDestroy {
   ];
   speed = 1.0;
 
-  readonly qualityPresets = [
+  readonly qualityPresets: QualityPreset[] = [
     { steps: 4,  label: 'Draft',    description: 'Fast preview' },
     { steps: 8,  label: 'Standard', description: 'Balanced quality' },
     { steps: 16, label: 'High',     description: 'Rich voice quality' },
     { steps: 32, label: 'Ultra',    description: 'Studio-grade' },
   ];
   // ★ Standard is the default (not Ultra — Ultra is too slow for first impression)
-  selectedQuality = this.qualityPresets[1];
+  selectedQuality: QualityPreset = this.qualityPresets[1];
 
   // ── Generation state ─────────────────────────────────────────────────
   generating = false;
   error = '';
   audioUrl: string | null = null;
-  generationState: 'idle' | 'processing' | 'ready' | 'failed' = 'idle';
+  generationState: GenerationState = 'idle';
   generationStartTime = 0;
   generationElapsedMs = 0;
   private _elapsedTimer: ReturnType<typeof setInterval> | null = null;
@@ -104,7 +95,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   private _previewAudio: HTMLAudioElement | null = null;
 
   // ── Projects ─────────────────────────────────────────────────────────
-  projects: any[] = [];
+  projects: ProjectSummary[] = [];
   selectedProjectId: number | null = null;
 
   // ── UI State ─────────────────────────────────────────────────────────
@@ -121,7 +112,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   currentPlaceholder = this.placeholderExamples[0];
   private _placeholderTimer: ReturnType<typeof setInterval> | null = null;
 
-  readonly scriptPresets = [
+  readonly scriptPresets: ScriptPreset[] = [
     { label: 'Story / Narration', text: 'एक समय की बात है, एक छोटे से गाँव में एक होनहार लड़की रहती थी। उसका नाम था आनंदी।' },
     { label: 'Promotional',       text: 'क्या आप अपने व्यापार को नई ऊँचाइयों पर ले जाना चाहते हैं? आज ही हमसे जुड़ें और अपने सपनों को साकार करें!' },
     { label: 'Greeting',          text: 'नमस्ते! आपका स्वागत है। आपका दिन शुभ और मंगलमय हो।' },
@@ -136,32 +127,16 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   get estimatedSpokenDuration(): string {
     if (!this.text.trim()) return '';
-    const charRate = this.selectedLang === 'en' ? 16 : 14;
-    const seconds = Math.ceil(this.text.length / charRate / this.speed);
-    if (seconds < 60) return `~${seconds}s`;
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `~${min}m ${sec}s`;
+    return this.estimator.spokenDuration(this.text, this.selectedLang, this.speed);
   }
 
   get estimatedGenerationTime(): string {
     if (!this.text.trim()) return '';
-    const base = 4;
-    const qualityFactor: Record<string, number> = {
-      'Draft': 0.55, 'Standard': 1.0, 'High': 1.8, 'Ultra': 3.5
-    };
-    const factor = qualityFactor[this.selectedQuality.label] || 1.0;
-    const seconds = Math.ceil(base + (this.text.length * 0.03 * factor));
-    return `~${seconds}s`;
+    return this.estimator.generationTime(this.text, this.selectedQuality);
   }
 
   get estimatedGenerationSeconds(): number {
-    const base = 4;
-    const qualityFactor: Record<string, number> = {
-      'Draft': 0.55, 'Standard': 1.0, 'High': 1.8, 'Ultra': 3.5
-    };
-    const factor = qualityFactor[this.selectedQuality.label] || 1.0;
-    return Math.ceil(base + (this.text.length * 0.03 * factor));
+    return this.estimator.generationSeconds(this.text, this.selectedQuality);
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────
@@ -226,19 +201,8 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   // ── Voice fetching with cache ─────────────────────────────────────────
   fetchVoices() {
-    if (StudioComponent._voiceCache) {
-      this.applyVoices(StudioComponent._voiceCache);
-      return;
-    }
-    this.http.get<Voice[]>(`${environment.apiBaseUrl}/voices`).subscribe({
-      next: res => {
-        const voices = (res || []).map(v => ({
-          ...v,
-          display_name: v.display_name.replace(/^(M|F)\d+\s*-\s*/i, '')
-        }));
-        StudioComponent._voiceCache = voices;
-        this.applyVoices(voices);
-      },
+    this.studioApi.getVoices().subscribe({
+      next: voices => this.applyVoices(voices),
       error: () => {}
     });
   }
@@ -246,7 +210,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   private applyVoices(voices: Voice[]) {
     this.ngZone.run(() => {
       this.voices = voices;
-      this.maleVoices   = voices.filter(v => v.gender === 'male');
+      this.maleVoices = voices.filter(v => v.gender === 'male');
       this.femaleVoices = voices.filter(v => v.gender === 'female');
       if (!this.selectedVoice && this.maleVoices.length > 0) {
         this.selectVoice(this.maleVoices[0]);
@@ -256,7 +220,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   }
 
   fetchProjects() {
-    this.http.get<any[]>(`${environment.apiBaseUrl}/projects`).subscribe({
+    this.studioApi.getProjects().subscribe({
       next: res => {
         this.ngZone.run(() => {
           this.projects = res;
@@ -286,7 +250,7 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   selectQuality(q: typeof this.qualityPresets[0]) { this.selectedQuality = q; }
   selectSpeed(s: number) { this.speed = s; }
-  selectLang(l: string) { this.selectedLang = l; }
+  selectLang(l: StudioLanguage) { this.selectedLang = l; }
 
   // ── Voice Preview ──────────────────────────────────────────────────────
   playVoicePreview(v: Voice, event: MouseEvent) {
@@ -306,13 +270,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.previewPlayingId = null;
     this.analytics.track('voice_previewed', { voiceId: v.engine_voice_id });
 
-    const greeting = 'नमस्ते! मैं आपकी आवाज़ हूँ। कैसे हैं आप?';
-
-    this.http.post(
-      `${environment.apiBaseUrl}/public/tts/preview`,
-      { text: greeting, engineVoiceId: v.engine_voice_id },
-      { responseType: 'blob' }
-    ).subscribe({
+    this.studioApi.previewVoice(v.engine_voice_id).subscribe({
       next: (blob) => {
         this.ngZone.run(() => {
           this.previewLoadingId = null;
@@ -373,9 +331,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.audioUrl = null;
     this.cdr.detectChanges(); // Force clear old audio
 
-    this.http.post(
-      `${environment.apiBaseUrl}/tts/generate`,
-      {
+    this.studioApi.generateAudio({
         text: this.text,
         voiceId: this.selectedVoice.engine_voice_id,
         engineVoiceId: this.selectedVoice.engine_voice_id,
@@ -383,9 +339,7 @@ export class StudioComponent implements OnInit, OnDestroy {
         speed: this.speed,
         totalSteps: this.selectedQuality.steps,
         projectId: this.selectedProjectId
-      },
-      { responseType: 'blob' }
-    ).subscribe({
+    }).subscribe({
       next: (blob: Blob) => {
         this.ngZone.run(() => {
           // Stop elapsed timer
