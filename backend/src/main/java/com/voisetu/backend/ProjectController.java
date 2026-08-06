@@ -1,5 +1,8 @@
 package com.voisetu.backend;
 
+import com.voisetu.backend.dto.ProjectRequest;
+import com.voisetu.backend.service.AuthenticatedUserService;
+import com.voisetu.backend.service.ProjectService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -10,39 +13,34 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/projects")
 public class ProjectController {
+    private final ProjectService projectService;
+    private final AuthenticatedUserService authenticatedUserService;
 
-    private final DashboardRepository dashboardRepository;
-    private final AppUserRepository userRepository;
-
-    public ProjectController(DashboardRepository dashboardRepository, AppUserRepository userRepository) {
-        this.dashboardRepository = dashboardRepository;
-        this.userRepository = userRepository;
-    }
-
-    private Long getUserId(Authentication auth) {
-        return userRepository.findByEmail(auth.getName()).orElseThrow().id();
+    public ProjectController(ProjectService projectService, AuthenticatedUserService authenticatedUserService) {
+        this.projectService = projectService;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @GetMapping
     public List<Map<String, Object>> getProjects(Authentication auth) {
-        return dashboardRepository.getProjects(getUserId(auth));
+        return projectService.listForUser(authenticatedUserService.userId(auth));
     }
 
     @PostMapping
-    public ResponseEntity<?> createProject(Authentication auth, @RequestBody Map<String, String> body) {
-        Long id = dashboardRepository.createProject(getUserId(auth), body.get("name"));
+    public ResponseEntity<?> createProject(Authentication auth, @RequestBody ProjectRequest request) {
+        Long id = projectService.create(authenticatedUserService.userId(auth), request.name());
         return ResponseEntity.ok(Map.of("id", id));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateProject(Authentication auth, @PathVariable Long id, @RequestBody Map<String, String> body) {
-        dashboardRepository.updateProject(getUserId(auth), id, body.get("name"));
+    public ResponseEntity<?> updateProject(Authentication auth, @PathVariable Long id, @RequestBody ProjectRequest request) {
+        projectService.rename(authenticatedUserService.userId(auth), id, request.name());
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProject(Authentication auth, @PathVariable Long id) {
-        dashboardRepository.deleteProject(getUserId(auth), id);
+        projectService.delete(authenticatedUserService.userId(auth), id);
         return ResponseEntity.ok().build();
     }
 }

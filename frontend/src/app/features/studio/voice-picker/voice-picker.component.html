@@ -1,0 +1,91 @@
+<div class="voice-col">
+      <div class="voice-picker">
+        <div class="voice-picker-header">
+          <span class="voice-picker-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            Voice
+          </span>
+          <span class="selected-voice-badge" *ngIf="selectedVoice">
+            {{ selectedVoice.display_name }} · {{ selectedVoice.engine_voice_id }}
+          </span>
+        </div>
+
+        <div class="tabs">
+          <button id="tab-male"   class="tab" [class.active]="selectedTab === 'Male'"   (click)="selectedTab = 'Male'">Male</button>
+          <button id="tab-female" class="tab" [class.active]="selectedTab === 'Female'" (click)="selectedTab = 'Female'">Female</button>
+          <button id="tab-my"     class="tab" [class.active]="selectedTab === 'My Voices'" (click)="selectedTab = 'My Voices'">My Voices</button>
+        </div>
+
+        <div class="tab-content" *ngIf="selectedTab === 'Male' || selectedTab === 'Female'">
+          <div class="voice-list">
+            <div
+              class="voice-card"
+              *ngFor="let v of (selectedTab === 'Male' ? maleVoices : femaleVoices)"
+              [class.selected]="selectedVoice?.id === v.id"
+              (click)="voiceSelected.emit(v)"
+              [id]="'voice-' + v.engine_voice_id"
+              role="button"
+              [attr.aria-pressed]="selectedVoice?.id === v.id"
+              [attr.aria-label]="'Select voice ' + v.display_name">
+
+              <!-- Animated person avatar -->
+              <div class="voice-avatar" [class.female]="v.gender === 'female'">
+                <svg class="person-svg" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Head -->
+                  <circle cx="20" cy="12" r="9" fill="currentColor" opacity="0.9"/>
+                  <!-- Body -->
+                  <path d="M8 40 C8 28 12 24 20 24 C28 24 32 28 32 40 L32 52 Q20 56 8 52 Z" fill="currentColor" opacity="0.75"/>
+                  <!-- Sound waves (animated) -->
+                  <path class="wave-1" d="M35 18 Q39 22 35 26" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                  <path class="wave-2" d="M37 14 Q43 22 37 30" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                </svg>
+              </div>
+
+              <div class="voice-info">
+                <div class="voice-name">{{ v.display_name }}</div>
+                <div class="voice-id">{{ v.engine_voice_id }}</div>
+                <div class="voice-tag">{{ v.style_tag }}</div>
+                <div class="voice-desc" *ngIf="v.description">{{ v.description }}</div>
+                <div class="voice-usecase" *ngIf="voiceUseCases[v.engine_voice_id]">
+                  {{ voiceUseCases[v.engine_voice_id] }}
+                </div>
+              </div>
+
+              <!-- Play preview button -->
+              <button
+                class="voice-preview-btn"
+                [class.loading]="previewLoadingId === v.engine_voice_id"
+                [class.playing]="previewPlayingId === v.engine_voice_id"
+                (click)="previewRequested.emit({ voice: v, event: $event })"
+                [title]="previewPlayingId === v.engine_voice_id ? 'Stop preview' : 'Preview voice'"
+                [id]="'preview-' + v.engine_voice_id"
+                [attr.aria-label]="'Preview voice ' + v.display_name">
+                <!-- Loading spinner -->
+                <span *ngIf="previewLoadingId === v.engine_voice_id" class="preview-spinner"></span>
+                <!-- Stop icon when playing -->
+                <svg *ngIf="previewPlayingId === v.engine_voice_id && previewLoadingId !== v.engine_voice_id"
+                     width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                </svg>
+                <!-- Play icon normally -->
+                <svg *ngIf="previewPlayingId !== v.engine_voice_id && previewLoadingId !== v.engine_voice_id"
+                     width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </button>
+
+              <div class="voice-check" *ngIf="selectedVoice?.id === v.id">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content empty-state" *ngIf="selectedTab === 'My Voices'">
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          </div>
+          <p>Voice cloning is on the roadmap — <a routerLink="/about">see what's coming</a>.</p>
+        </div>
+      </div>
+    </div><!-- /voice-col -->
