@@ -55,7 +55,7 @@
   --gradient-surface: linear-gradient(180deg, rgba(124, 92, 247, 0.06) 0%, transparent 100%);
   --gradient-india: linear-gradient(135deg, rgba(255,153,51,0.08) 0%, rgba(124,92,247,0.08) 50%, rgba(19,136,8,0.04) 100%);
   /* Glass */
-  --glass-bg: rgba(14, 14, 22, 0.75);
+  --glass-bg: rgba(5, 5, 10, 0.90);
   --glass-border: rgba(255, 255, 255, 0.07);
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
@@ -108,7 +108,7 @@
   --gradient-violet: linear-gradient(135deg, #6c47e8 0%, #d04070 100%);
   --gradient-surface: linear-gradient(180deg, rgba(108, 71, 232, 0.04) 0%, transparent 100%);
   --gradient-india: linear-gradient(135deg, rgba(232,114,10,0.06) 0%, rgba(108,71,232,0.06) 50%, rgba(19,136,8,0.03) 100%);
-  --glass-bg: rgba(248, 247, 255, 0.78);
+  --glass-bg: rgba(240, 240, 245, 0.90);
   --glass-border: rgba(0, 0, 0, 0.06);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.09);
@@ -283,6 +283,11 @@ audio::-webkit-media-controls-panel {
 .india-pattern-bg {
   background-color: var(--bg-primary);
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff9933' fill-opacity='0.04'%3E%3Cpath d='M30 0 L32 28 L60 30 L32 32 L30 60 L28 32 L0 30 L28 28 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Day-mode: increase pattern opacity so it's clearly visible on light backgrounds */
+[data-theme="day"] .india-pattern-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c05800' fill-opacity='0.11'%3E%3Cpath d='M30 0 L32 28 L60 30 L32 32 L30 60 L28 32 L0 30 L28 28 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* ── Skeleton Loading ── */

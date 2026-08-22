@@ -21,6 +21,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
 
   menuOpen = false;
+  sidebarCollapsed = false;
   isAdmin = false;
 
   // Avatar state
@@ -60,5 +61,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   toggleMenu() { this.menuOpen = !this.menuOpen; }
   closeMenu() { this.menuOpen = false; }
+  toggleSidebar() { this.sidebarCollapsed = !this.sidebarCollapsed; }
   logout() { this.authService.logout(); }
 }

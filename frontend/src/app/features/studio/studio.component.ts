@@ -30,7 +30,7 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   // ── Text ────────────────────────────────────────────────────────────
   text = '';
-  maxChars = 1000;
+  maxChars = 15000;
 
   // ── Voices ──────────────────────────────────────────────────────────
   voices: Voice[] = [];
@@ -54,31 +54,31 @@ export class StudioComponent implements OnInit, OnDestroy {
   };
 
   // ── TTS Controls ────────────────────────────────────────────────────
-  readonly langOptions = [
-    { value: 'na',  label: '🌐 Auto (Hinglish)' },
-    { value: 'hi',  label: '🇮🇳 Hindi' },
-    { value: 'en',  label: '🇬🇧 English' },
+  readonly langOptions: { value: StudioLanguage, label: string }[] = [
+    { value: 'na', label: '🌐 Auto (Hinglish)' },
+    { value: 'hi', label: '🇮🇳 Hindi' },
+    { value: 'en', label: '🇬🇧 English' },
   ];
   selectedLang: StudioLanguage = 'na';
 
   readonly speedPresets = [
     { value: 0.75, label: '0.75×' },
-    { value: 0.9,  label: '0.9×'  },
-    { value: 1.0,  label: '1.0×'  },
-    { value: 1.1,  label: '1.1×'  },
+    { value: 0.9, label: '0.9×' },
+    { value: 1.0, label: '1.0×' },
+    { value: 1.1, label: '1.1×' },
     { value: 1.25, label: '1.25×' },
-    { value: 1.5,  label: '1.5×'  },
+    { value: 1.5, label: '1.5×' },
   ];
   speed = 1.0;
 
   readonly qualityPresets: QualityPreset[] = [
-    { steps: 4,  label: 'Draft',    description: 'Fast preview' },
-    { steps: 8,  label: 'Standard', description: 'Balanced quality' },
-    { steps: 16, label: 'High',     description: 'Rich voice quality' },
-    { steps: 32, label: 'Ultra',    description: 'Studio-grade' },
+    { steps: 4, label: 'Draft', description: 'Fast preview' },
+    { steps: 8, label: 'Standard', description: 'Balanced quality' },
+    { steps: 16, label: 'High', description: 'Rich voice quality' },
+    { steps: 32, label: 'Ultra', description: 'Studio-grade' },
   ];
-  // ★ Standard is the default (not Ultra — Ultra is too slow for first impression)
-  selectedQuality: QualityPreset = this.qualityPresets[1];
+  // ★ High the default
+  selectedQuality: QualityPreset = this.qualityPresets[2];
 
   // ── Generation state ─────────────────────────────────────────────────
   generating = false;
@@ -114,11 +114,11 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   readonly scriptPresets: ScriptPreset[] = [
     { label: 'Story / Narration', text: 'एक समय की बात है, एक छोटे से गाँव में एक होनहार लड़की रहती थी। उसका नाम था आनंदी।' },
-    { label: 'Promotional',       text: 'क्या आप अपने व्यापार को नई ऊँचाइयों पर ले जाना चाहते हैं? आज ही हमसे जुड़ें और अपने सपनों को साकार करें!' },
-    { label: 'Greeting',          text: 'नमस्ते! आपका स्वागत है। आपका दिन शुभ और मंगलमय हो।' },
-    { label: 'News Bulletin',     text: 'आज की ताज़ा ख़बरें: देश के विभिन्न हिस्सों में मानसून की अच्छी बारिश दर्ज की गई है।' },
-    { label: 'Hinglish Casual',   text: "Yaar, aaj ka din bahut amazing raha! Maine socha tha ki kuch naya try karein, toh let's go!" },
-    { label: 'English Business',  text: 'Good morning! Our quarterly results show a 28% growth in revenue. Let us walk through the key highlights.' },
+    { label: 'Promotional', text: 'क्या आप अपने व्यापार को नई ऊँचाइयों पर ले जाना चाहते हैं? आज ही हमसे जुड़ें और अपने सपनों को साकार करें!' },
+    { label: 'Greeting', text: 'नमस्ते! आपका स्वागत है। आपका दिन शुभ और मंगलमय हो।' },
+    { label: 'News Bulletin', text: 'आज की ताज़ा ख़बरें: देश के विभिन्न हिस्सों में मानसून की अच्छी बारिश दर्ज की गई है।' },
+    { label: 'Hinglish Casual', text: "Yaar, aaj ka din bahut amazing raha! Maine socha tha ki kuch naya try karein, toh let's go!" },
+    { label: 'English Business', text: 'Good morning! Our quarterly results show a 28% growth in revenue. Let us walk through the key highlights.' },
   ];
 
   // ── Computed getters ──────────────────────────────────────────────────
@@ -203,7 +203,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   fetchVoices() {
     this.studioApi.getVoices().subscribe({
       next: voices => this.applyVoices(voices),
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -227,7 +227,7 @@ export class StudioComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -238,8 +238,8 @@ export class StudioComponent implements OnInit, OnDestroy {
     const hasHindi = /[\u0900-\u097F]/.test(preset.text);
     const hasLatin = /[a-zA-Z]/.test(preset.text);
     if (hasHindi && hasLatin) this.selectedLang = 'na';
-    else if (hasHindi)        this.selectedLang = 'hi';
-    else                      this.selectedLang = 'en';
+    else if (hasHindi) this.selectedLang = 'hi';
+    else this.selectedLang = 'en';
     this.saveDraft();
   }
 
@@ -249,6 +249,10 @@ export class StudioComponent implements OnInit, OnDestroy {
   }
 
   selectQuality(q: typeof this.qualityPresets[0]) { this.selectedQuality = q; }
+  selectQualityBySteps(steps: number) {
+    const found = this.qualityPresets.find(q => q.steps === steps);
+    if (found) this.selectedQuality = found;
+  }
   selectSpeed(s: number) { this.speed = s; }
   selectLang(l: StudioLanguage) { this.selectedLang = l; }
 
@@ -332,13 +336,13 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges(); // Force clear old audio
 
     this.studioApi.generateAudio({
-        text: this.text,
-        voiceId: this.selectedVoice.engine_voice_id,
-        engineVoiceId: this.selectedVoice.engine_voice_id,
-        lang: this.selectedLang,
-        speed: this.speed,
-        totalSteps: this.selectedQuality.steps,
-        projectId: this.selectedProjectId
+      text: this.text,
+      voiceId: this.selectedVoice.engine_voice_id,
+      engineVoiceId: this.selectedVoice.engine_voice_id,
+      lang: this.selectedLang,
+      speed: this.speed,
+      totalSteps: this.selectedQuality.steps,
+      projectId: this.selectedProjectId
     }).subscribe({
       next: (blob: Blob) => {
         this.ngZone.run(() => {

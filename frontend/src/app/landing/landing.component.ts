@@ -24,7 +24,7 @@ export class LandingComponent implements OnInit {
 
   voices: any[] = [];
   selectedVoiceId = '';
-  textToSynthesize = '"नमस्ते, आप कैसे हैं? मुझे आपकी आवाज़ में कुछ सुनना है।"';
+  textToSynthesize = 'कम बोलो, ज़्यादा करो — let your results speak for you.';
   isLoading = false;
   audioUrl: string | null = null;
   errorMessage: string | null = null;
