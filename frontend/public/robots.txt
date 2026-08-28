@@ -5,4 +5,37 @@ Disallow: /settings
 Disallow: /history
 Disallow: /projects
 
+# ── AI & LLM Crawlers ── explicitly allowed for AI search discovery ────────
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+# AI discovery files
+# llms.txt: https://words2voice.in/llms.txt
+# ──────────────────────────────────────────────────────────────────────────────
+
 Sitemap: https://words2voice.in/sitemap.xml
+

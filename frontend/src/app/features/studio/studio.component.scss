@@ -697,6 +697,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  position: relative;
+  z-index: 1;
+
+  /* Day mode: stronger contrast so mc-panel is clearly “on” the card */
+  [data-theme="day"] & {
+    background: #ffffff;
+    border: 2px solid var(--accent);
+    box-shadow: 0 4px 24px rgba(99, 65, 220, 0.14);
+  }
 
   .error-msg {
     display: flex;
@@ -795,9 +804,13 @@
     gap: 0.75rem;
     audio {
       flex: 1;
-      height: 38px;
-      border-radius: 0.5rem;
+      height: 48px;
+      border-radius: 0.625rem;
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--accent-glow);
+      box-shadow: 0 0 12px rgba(124, 92, 247, 0.15), 0 2px 8px rgba(0,0,0,0.1);
       accent-color: var(--accent);
+      padding: 0 0.25rem;
     }
   }
 
@@ -830,6 +843,23 @@
       box-shadow: 0 0 16px var(--accent-glow);
       transform: translateY(-1px);
     }
+  }
+}
+
+/* ── Day mode: studio audio result card ── */
+[data-theme="day"] .result-section {
+  background: #fafafe;
+  border: 2px solid var(--accent);
+  box-shadow: 0 4px 24px rgba(99, 65, 220, 0.14);
+
+  .audio-row audio {
+    background: #f0eeff;
+    border: 2px solid var(--accent);
+    box-shadow: 0 2px 12px rgba(99, 65, 220, 0.2);
+  }
+
+  .audio-result-card {
+    background: transparent;
   }
 }
 

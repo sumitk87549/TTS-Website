@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>words2voice — Server Maintenance</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0f;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card {
+      background: #13131a;
+      border: 1px solid #2d2d44;
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(139, 92, 246, 0.08);
+    }
+    .icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
+    h1 { font-size: 1.6rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.75rem; }
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .divider { height: 1px; background: #2d2d44; margin: 1.5rem 0; }
+    .contact-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 1rem; }
+    .contact-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+    .contact-item a {
+      color: #a78bfa;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+    .contact-item a:hover { color: #c4b5fd; }
+    .badge {
+      display: inline-block;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #a78bfa;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      margin-top: 1.5rem;
+    }
+    .pulse {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #f59e0b;
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="icon">🎙️</span>
+    <h1>words2voice is taking a short break</h1>
+    <p class="subtitle">
+      The server is currently down for maintenance or restarting.<br>
+      It should be back up shortly — please try again in a few minutes.
+    </p>
+
+    <div class="divider"></div>
+
+    <p class="contact-label">Need help right now?</p>
+
+    <div class="contact-item">
+      <span>✉️</span>
+      <a href="mailto:sumitk87549@gmail.com">sumitk87549@gmail.com</a>
+    </div>
+    <div class="contact-item">
+      <span>📞</span>
+      <a href="tel:+917976611437">+91 79766 11437</a>
+    </div>
+
+    <div class="badge">
+      <span class="pulse"></span>
+      Restoring service…
+    </div>
+  </div>
+</body>
+</html>

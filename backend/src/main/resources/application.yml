@@ -2,16 +2,17 @@ spring:
   application:
     name: voisetu-backend
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
   sql:
     init:
       mode: always
 
----
 server:
   error:
     include-stacktrace: never
 
+# ─── Local development profile ────────────────────────────────────────────────
+---
 spring:
   config:
     activate:
@@ -25,7 +26,9 @@ spring:
 supertonic:
   engine:
     base-url: http://127.0.0.1:8000
+
 app:
+  allowed-origins: http://localhost:4200
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
     expiration-ms: 86400000
@@ -34,3 +37,45 @@ app:
   usage:
     daily-limit: 5000
     max-request-chars: 1000
+
+# ─── Production profile (Render.com) ─────────────────────────────────────────
+# All values come from Render environment variables — nothing is hardcoded.
+# Set these in Render dashboard → Environment tab:
+#   DATABASE_URL    = jdbc:postgresql://... (from Neon connection string)
+#   DB_USERNAME     = your-neon-username
+#   DB_PASSWORD     = your-neon-password
+#   JWT_SECRET      = a-long-random-secret-string-min-32-chars
+#   TTS_ENGINE_URL  = http://YOUR_ORACLE_VM_IP:8000
+#   ALLOWED_ORIGINS = https://words2voice.pages.dev,https://words2voice.in
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+supertonic:
+  engine:
+    base-url: ${TTS_ENGINE_URL:http://localhost:8000}
+
+app:
+  allowed-origins: ${ALLOWED_ORIGINS:https://words2voice.pages.dev}
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000
+  storage:
+    audio-dir: /tmp/w2v-audio
+  usage:
+    daily-limit: 5000
+    max-request-chars: 1000
+

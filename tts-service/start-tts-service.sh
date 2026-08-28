@@ -20,10 +20,12 @@ if [[ ! -d "${VENV}" ]]; then
 fi
 
 # ── Auto-clear the port if already in use ────────────────────────────────────
-if command -v fuser &>/dev/null && fuser "${PORT}/tcp" &>/dev/null 2>&1; then
-  echo "⚠️   Port ${PORT} is already in use — killing the existing process..."
-  fuser -k "${PORT}/tcp" || true
-  sleep 1
+if command -v fuser &>/dev/null && fuser "${PORT}/tcp" &>/dev/null; then
+  echo "⚠️   Port ${PORT} is already in use — freeing port..."
+  fuser -k -9 "${PORT}/tcp" &>/dev/null || true
+  while fuser "${PORT}/tcp" &>/dev/null 2>&1; do
+    sleep 0.2
+  done
 fi
 
 echo "🚀  Starting Voisetu TTS service on http://127.0.0.1:${PORT}"

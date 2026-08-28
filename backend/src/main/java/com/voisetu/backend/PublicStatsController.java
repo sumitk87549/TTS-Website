@@ -26,10 +26,13 @@ public class PublicStatsController {
         long totalUsers = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM app_user", Long.class);
         long totalGenerations = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM generation WHERE status = 'success'", Long.class);
+        long totalVisitors = jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT anonymous_id) FROM analytics_session", Long.class);
 
         return Map.of(
                 "totalUsers", totalUsers,
-                "totalGenerations", totalGenerations
+                "totalGenerations", totalGenerations,
+                "totalVisitors", totalVisitors
         );
     }
 }

@@ -102,3 +102,22 @@ CREATE TABLE IF NOT EXISTS synthesis_metric (
     rtf             NUMERIC(6,3),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ═══════════════════════════════════════════════════════════════
+--  Business metrics — aggregated daily stats for quick reporting
+-- ═══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS site_daily_stats (
+    stat_date           DATE PRIMARY KEY,
+    unique_sessions     INT NOT NULL DEFAULT 0,   -- distinct sessions that day
+    unique_anon_ids     INT NOT NULL DEFAULT 0,   -- distinct anonymous visitors
+    registered_users    INT NOT NULL DEFAULT 0,   -- total registered users (snapshot)
+    new_signups         INT NOT NULL DEFAULT 0,   -- new registrations that day
+    total_generations   INT NOT NULL DEFAULT 0,   -- successful generations that day
+    total_chars         BIGINT NOT NULL DEFAULT 0,-- total characters synthesized
+    page_views          INT NOT NULL DEFAULT 0,   -- page_view events that day
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_session_created ON analytics_session(created_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_session_anon ON analytics_session(anonymous_id);
+CREATE INDEX IF NOT EXISTS idx_generation_status ON generation(status, created_at);

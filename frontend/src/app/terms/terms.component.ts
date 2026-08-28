@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ThemeService } from '../core/theme/theme.service';
 
@@ -11,6 +11,13 @@ import { ThemeService } from '../core/theme/theme.service';
     <main class="legal-page india-pattern-bg">
       <nav class="navbar">
         <div class="nav-inner">
+          <button class="back-btn" (click)="location.back()" aria-label="Go back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back
+          </button>
           <a routerLink="/" class="logo">
             <img src="logo.png" alt="words2voice logo" class="logo-img" />
             <span class="logo-text">words2voice</span>
@@ -44,12 +51,26 @@ import { ThemeService } from '../core/theme/theme.service';
   `,
   styles: [`
     .legal-page { min-height: 100vh; padding-bottom: 4rem; }
-    .navbar { border-bottom: 1px solid var(--border); background: var(--glass-bg); padding: 1rem 0; }
+    .navbar { border-bottom: 1px solid var(--border); background: var(--glass-bg); backdrop-filter: blur(20px); padding: 1rem 0; }
     .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
     .logo-img { width: 32px; height: 32px; border-radius: 0.5rem; }
     .logo-text { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; color: var(--text-primary); }
-    .theme-toggle { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: var(--text-primary); }
+    .theme-toggle { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    .back-btn {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-subtle); }
     .legal-content { max-width: 800px; margin: 4rem auto 0; padding: 0 1.5rem; }
     h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
     .last-updated { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 3rem; font-family: 'JetBrains Mono', monospace; }
@@ -60,4 +81,5 @@ import { ThemeService } from '../core/theme/theme.service';
 })
 export class TermsComponent {
   themeService = inject(ThemeService);
+  location = inject(Location);
 }

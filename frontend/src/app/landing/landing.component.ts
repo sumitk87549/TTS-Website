@@ -33,6 +33,7 @@ export class LandingComponent implements OnInit {
 
   totalGenerations = 0;
   totalUsers = 0;
+  totalVisitors = 0;
 
   ngOnInit() {
     this.http.get<any[]>(`${environment.apiBaseUrl}/public/tts/voices`)
@@ -55,6 +56,7 @@ export class LandingComponent implements OnInit {
           this.ngZone.run(() => {
             this.totalGenerations = data?.totalGenerations || 0;
             this.totalUsers = data?.totalUsers || 0;
+            this.totalVisitors = data?.totalVisitors || 0;
             this.cdr.markForCheck();
           });
         },

@@ -154,15 +154,15 @@
   </section>
 
   <!-- ═══ Stats Bar ═══ -->
-  <section class="stats-bar" *ngIf="totalUsers > 50">
+  <section class="stats-bar" *ngIf="totalGenerations > 20">
     <div class="stat-item">
       <span class="stat-number">{{ totalGenerations | number }}</span>
       <span class="stat-label">Voices Generated</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span class="stat-number">{{ totalUsers | number }}</span>
-      <span class="stat-label">Creators</span>
+      <span class="stat-number">{{ totalUsers > 0 ? (totalUsers | number) : '—' }}</span>
+      <span class="stat-label">Registered Creators</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">

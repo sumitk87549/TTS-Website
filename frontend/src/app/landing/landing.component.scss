@@ -638,8 +638,24 @@
 
   audio {
     width: 100%;
-    height: 40px;
-    border-radius: 0.5rem;
+    height: 48px;
+    border-radius: 0.625rem;
+    background: var(--bg-elevated);
+    border: 1.5px solid var(--accent-glow);
+    box-shadow: 0 0 12px rgba(124, 92, 247, 0.15), 0 2px 8px rgba(0,0,0,0.12);
+    display: block;
+    /* Chromium audio accent */
+    accent-color: var(--accent);
+    padding: 0 0.25rem;
+  }
+}
+
+/* ── Day mode: audio player needs strong contrast ── */
+[data-theme="day"] .audio-result {
+  audio {
+    background: #f0eeff;
+    border: 2px solid var(--accent);
+    box-shadow: 0 2px 12px rgba(99, 65, 220, 0.2), 0 1px 4px rgba(0,0,0,0.08);
   }
 }
 

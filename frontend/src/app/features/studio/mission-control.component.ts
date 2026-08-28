@@ -81,14 +81,31 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     .mc-panel {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      border: 2px solid var(--accent-glow);
       border-radius: 1rem;
-      padding: 1.5rem;
+      padding: 1.25rem 1.5rem;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1rem;
       animation: mc-slide-in 0.4s ease-out;
+      box-shadow: 0 4px 24px rgba(124, 92, 247, 0.12), 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Day mode: fully solid, clearly an integrated component */
+    :host-context([data-theme="day"]) .mc-panel {
+      background: #f5f4ff;
+      border: 2px solid var(--accent);
+      box-shadow: 0 4px 20px rgba(99, 65, 220, 0.18), 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    :host-context([data-theme="day"]) .mc-timer {
+      color: #3a2d8a;
+    }
+
+    :host-context([data-theme="day"]) .mc-stat {
+      background: #ffffff;
+      border-color: rgba(99, 65, 220, 0.25);
     }
 
     @keyframes mc-slide-in {

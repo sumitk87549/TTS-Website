@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 interface AnalyticsEvent {
   name: string;
@@ -22,7 +23,7 @@ export class AnalyticsService {
   private anonymousId: string;
   private sessionId: string;
   private flushTimer: ReturnType<typeof setInterval> | null = null;
-  private apiUrl = 'http://localhost:8080/api/public/analytics/events';
+  private readonly apiUrl = `${environment.apiBaseUrl}/public/analytics/events`;
 
   constructor(private router: Router) {
     this.anonymousId = this.getOrCreateId(this.ANON_KEY);
