@@ -1,10 +1,12 @@
-import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TimeFormatPipe } from '@shared/pipes/time-format.pipe';
 
 @Component({
   selector: 'app-mission-control',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TimeFormatPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mc-panel">
       <!-- Top Status Bar -->
@@ -14,7 +16,7 @@ import { CommonModule } from '@angular/common';
           {{ isComplete ? 'Complete' : 'Processing' }}
         </div>
         <div class="mc-timer">
-          {{ formatTime(elapsedMs) }}
+          {{ elapsedMs | timeFormat }}
         </div>
       </div>
 
@@ -441,12 +443,7 @@ export class MissionControlComponent implements OnInit, OnDestroy {
     return Math.round(pct);
   }
 
-  formatTime(ms: number): string {
-    const totalSec = Math.floor(ms / 1000);
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${s}s`;
-  }
+  // formatTime() replaced by the TimeFormatPipe: {{ elapsedMs | timeFormat }}
 
   ngOnInit() {
     // Rotate tips every 3 seconds

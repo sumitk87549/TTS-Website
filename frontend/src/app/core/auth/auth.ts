@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Subject, tap } from 'rxjs';
+import { Subject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -12,46 +12,41 @@ export class AuthService {
   private router = inject(Router);
   private apiUrl = `${environment.apiBaseUrl}/auth`;
 
-  // Store token in localStorage for this hobby project
+  // Signal-based token — integrates with OnPush CD and zoneless mode seamlessly
   // In production, HttpOnly cookies would be more secure but adds complexity for v1
-  private tokenSubject = new BehaviorSubject<string | null>(localStorage.getItem('token'));
-  public token$ = this.tokenSubject.asObservable();
+  readonly token = signal<string | null>(localStorage.getItem('token'));
 
-  get token(): string | null {
-    return this.tokenSubject.value;
-  }
+  // Computed signal: automatically updates any component reading it
+  readonly isAuthenticated = computed(() => !!this.token());
 
-  get isAuthenticated(): boolean {
-    return !!this.token;
-  }
+  // Event bus to sync profile updates between Settings → UserProfileService → Dashboard
+  // Kept as Subject (Observable) since it's a one-way notification, not a state value
+  readonly profileUpdated$ = new Subject<void>();
 
-  // Event bus to sync profile updates between Settings and Dashboard
-  public profileUpdated$ = new Subject<void>();
-
-  notifyProfileUpdate() {
+  notifyProfileUpdate(): void {
     this.profileUpdated$.next();
   }
 
   register(data: any) {
-    return this.http.post<{token: string}>(`${this.apiUrl}/register`, data).pipe(
+    return this.http.post<{ token: string }>(`${this.apiUrl}/register`, data).pipe(
       tap(res => this.handleAuthSuccess(res.token))
     );
   }
 
   login(data: any) {
-    return this.http.post<{token: string}>(`${this.apiUrl}/login`, data).pipe(
+    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, data).pipe(
       tap(res => this.handleAuthSuccess(res.token))
     );
   }
 
-  logout() {
+  logout(): void {
     localStorage.removeItem('token');
-    this.tokenSubject.next(null);
+    this.token.set(null);
     this.router.navigate(['/login']);
   }
 
-  private handleAuthSuccess(token: string) {
+  private handleAuthSuccess(token: string): void {
     localStorage.setItem('token', token);
-    this.tokenSubject.next(token);
+    this.token.set(token);
   }
 }

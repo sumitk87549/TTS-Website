@@ -10,6 +10,7 @@
       </div>
     </div>
   </div>
+
   <div class="auth-form-side">
     <div class="auth-card">
       <a routerLink="/" class="auth-logo">
@@ -19,33 +20,87 @@
       <h2>Create your account</h2>
       <p class="auth-subtitle">Start creating natural Hindi voiceovers — free.</p>
 
-      <div class="error-banner" *ngIf="error">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="15" y1="9" x2="9" y2="15" />
-          <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-        {{ error }}
-      </div>
+      <!-- Server error -->
+      @if (serverError) {
+        <div class="error-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          {{ serverError }}
+        </div>
+      }
 
-      <form (ngSubmit)="onSubmit()">
-        <div class="form-group">
+      <!-- Reactive Form -->
+      <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+
+        <!-- Display Name -->
+        <div class="form-group" [class.has-error]="hasError('displayName', 'required') || hasError('displayName', 'minlength')">
           <label for="signup-name">Your Name</label>
-          <input type="text" id="signup-name" [(ngModel)]="displayName" name="displayName" required placeholder="Aarav"
+          <input
+            type="text"
+            id="signup-name"
+            formControlName="displayName"
+            placeholder="Aarav"
             autocomplete="name" />
+          @if (hasError('displayName', 'required')) {
+            <span class="field-error">Name is required.</span>
+          } @else if (hasError('displayName', 'minlength')) {
+            <span class="field-error">Name must be at least 2 characters.</span>
+          }
         </div>
-        <div class="form-group">
+
+        <!-- Email -->
+        <div class="form-group" [class.has-error]="hasError('email', 'required') || hasError('email', 'email')">
           <label for="signup-email">Email Address</label>
-          <input type="email" id="signup-email" [(ngModel)]="email" name="email" required placeholder="name@example.com"
+          <input
+            type="email"
+            id="signup-email"
+            formControlName="email"
+            placeholder="name@example.com"
             autocomplete="email" />
+          @if (hasError('email', 'required')) {
+            <span class="field-error">Email is required.</span>
+          } @else if (hasError('email', 'email')) {
+            <span class="field-error">Please enter a valid email address.</span>
+          }
         </div>
-        <div class="form-group">
+
+        <!-- Password -->
+        <div class="form-group" [class.has-error]="password.touched && password.invalid">
           <label for="signup-password">Password</label>
-          <input type="password" id="signup-password" [(ngModel)]="password" name="password" required
-            placeholder="••••••••" autocomplete="new-password" />
+          <input
+            type="password"
+            id="signup-password"
+            formControlName="password"
+            placeholder="Min. 8 chars, 1 uppercase, 1 digit"
+            autocomplete="new-password" />
+
+          <!-- Progressive password strength hints -->
+          @if (password.touched && password.errors) {
+            <div class="password-hints">
+              <span class="hint" [class.ok]="passwordStrength.longEnough">
+                {{ passwordStrength.longEnough ? '✓' : '○' }} 8+ characters
+              </span>
+              <span class="hint" [class.ok]="passwordStrength.hasUppercase">
+                {{ passwordStrength.hasUppercase ? '✓' : '○' }} 1 uppercase letter
+              </span>
+              <span class="hint" [class.ok]="passwordStrength.hasDigit">
+                {{ passwordStrength.hasDigit ? '✓' : '○' }} 1 number
+              </span>
+            </div>
+          }
+          @if (hasError('password', 'required')) {
+            <span class="field-error">Password is required.</span>
+          }
         </div>
-        <button type="submit" class="btn-submit" [disabled]="loading || !email || !password || !displayName"
-          id="btn-signup-submit">
+
+        <button
+          type="submit"
+          class="btn-submit"
+          id="btn-signup-submit"
+          [disabled]="loading">
           {{ loading ? 'Creating account...' : 'Create Free Account' }}
         </button>
       </form>

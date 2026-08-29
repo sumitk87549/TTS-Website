@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Voice, VoiceTab } from '../models/studio.models';
 
@@ -8,7 +8,8 @@ import { Voice, VoiceTab } from '../models/studio.models';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './voice-picker.component.html',
-  styleUrls: ['./voice-picker.component.scss']
+  styleUrls: ['./voice-picker.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VoicePickerComponent {
   @Input() maleVoices: Voice[] = [];

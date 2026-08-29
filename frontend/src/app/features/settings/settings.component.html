@@ -5,7 +5,7 @@
     <p class="subtitle">Manage your profile, avatar, and preferences.</p>
   </div>
 
-  <!-- ── Avatar / Profile Look ── -->
+  <!-- ── Avatar / Profile Look — Template-Driven (no validation needed) ── -->
   <section class="settings-section">
     <h3>Your Avatar</h3>
     <div class="section-card avatar-card">
@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <!-- Emoji grid -->
+      <!-- Emoji grid — template-driven click binding -->
       <div class="avatar-section-label">Choose an icon</div>
       <div class="avatar-emoji-grid">
         <button
@@ -34,7 +34,7 @@
         </button>
       </div>
 
-      <!-- Color chooser -->
+      <!-- Color chooser — template-driven -->
       <div class="avatar-section-label">Choose a colour</div>
       <div class="color-options">
         <button
@@ -49,52 +49,103 @@
 
       <div class="avatar-save-row">
         <button class="btn-primary" (click)="saveAvatar()">Save Avatar</button>
-        <span class="save-confirm" *ngIf="avatarSaved">✓ Saved!</span>
+        @if (avatarSaved) {
+          <span class="save-confirm">✓ Saved!</span>
+        }
       </div>
     </div>
   </section>
 
-  <!-- ── Profile ── -->
+  <!-- ── Profile — Reactive Form ── -->
   <section class="settings-section">
     <h3>Profile</h3>
     <div class="section-card">
-      <div class="alert-success" *ngIf="profileSuccess">{{ profileSuccess }}</div>
+      @if (profileSuccess) {
+        <div class="alert-success">{{ profileSuccess }}</div>
+      }
 
+      <!-- Read-only email (not part of the form group) -->
       <div class="form-group readonly">
         <label>Email Address</label>
-        <input type="text" [value]="user.email" disabled id="settings-email" />
+        <input type="text" [value]="profileService.email()" disabled id="settings-email" />
       </div>
 
-      <div class="form-group">
-        <label>Display Name</label>
-        <input type="text" [(ngModel)]="displayNameInput" id="settings-display-name" placeholder="Your name" />
-      </div>
+      <!-- Reactive form for display name -->
+      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+        <div class="form-group" [class.has-error]="hasProfileError('required') || hasProfileError('minlength')">
+          <label for="settings-display-name">Display Name</label>
+          <input
+            type="text"
+            id="settings-display-name"
+            formControlName="displayName"
+            placeholder="Your name" />
+          @if (hasProfileError('required')) {
+            <span class="field-error">Display name is required.</span>
+          } @else if (hasProfileError('minlength')) {
+            <span class="field-error">Name must be at least 2 characters.</span>
+          }
+        </div>
 
-      <button class="btn-primary" (click)="updateProfile()" [disabled]="displayNameInput === user.displayName || !displayNameInput.trim()">
-        Save Changes
-      </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="profileForm.invalid || displayName.value === profileService.displayName()">
+          Save Changes
+        </button>
+      </form>
     </div>
   </section>
 
-  <!-- ── Password ── -->
+  <!-- ── Password — Reactive Form with cross-field validator ── -->
   <section class="settings-section">
     <h3>Password</h3>
     <div class="section-card">
-      <div class="alert-success" *ngIf="passwordSuccess">{{ passwordSuccess }}</div>
-      <div class="alert-error" *ngIf="passwordError">{{ passwordError }}</div>
+      @if (passwordSuccess) {
+        <div class="alert-success">{{ passwordSuccess }}</div>
+      }
+      @if (passwordError) {
+        <div class="alert-error">{{ passwordError }}</div>
+      }
+      @if (passwordForm.errors?.['samePassword'] && passwordForm.touched) {
+        <div class="alert-error">New password must be different from current password.</div>
+      }
 
-      <div class="form-group">
-        <label>Current Password</label>
-        <input type="password" [(ngModel)]="currentPassword" id="settings-current-pw" autocomplete="current-password" placeholder="Current password" />
-      </div>
-      <div class="form-group">
-        <label>New Password</label>
-        <input type="password" [(ngModel)]="newPassword" id="settings-new-pw" autocomplete="new-password" placeholder="New password" />
-      </div>
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+        <div class="form-group" [class.has-error]="hasPasswordError('currentPassword', 'required') || hasPasswordError('currentPassword', 'minlength')">
+          <label>Current Password</label>
+          <input
+            type="password"
+            id="settings-current-pw"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+            placeholder="Current password" />
+          @if (hasPasswordError('currentPassword', 'required')) {
+            <span class="field-error">Current password is required.</span>
+          }
+        </div>
 
-      <button class="btn-primary" (click)="changePassword()" [disabled]="!currentPassword || !newPassword">
-        Update Password
-      </button>
+        <div class="form-group" [class.has-error]="hasPasswordError('newPassword', 'required') || hasPasswordError('newPassword', 'minlength')">
+          <label>New Password</label>
+          <input
+            type="password"
+            id="settings-new-pw"
+            formControlName="newPassword"
+            autocomplete="new-password"
+            placeholder="Min. 8 characters" />
+          @if (hasPasswordError('newPassword', 'required')) {
+            <span class="field-error">New password is required.</span>
+          } @else if (hasPasswordError('newPassword', 'minlength')) {
+            <span class="field-error">Password must be at least 8 characters.</span>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="passwordForm.invalid">
+          Update Password
+        </button>
+      </form>
     </div>
   </section>
 
@@ -110,51 +161,58 @@
     </div>
   </section>
 
-  <!-- ── Feedback ── -->
+  <!-- ── Feedback — Template-Driven (radios + textarea, no complex validation) ── -->
   <section class="settings-section" id="upgrade">
     <h3>Feedback</h3>
     <div class="section-card research-card">
-      <div *ngIf="!interestSubmitted">
-        <p class="research-intro">
-          This is free while we're testing. Telling us whether you'd ever pay helps decide what to build next.
-        </p>
-        <div class="alert-error" *ngIf="interestError">{{ interestError }}</div>
+      @if (!interestSubmitted) {
+        <div>
+          <p class="research-intro">
+            This is free while we're testing. Telling us whether you'd ever pay helps decide what to build next.
+          </p>
+          @if (interestError) {
+            <div class="alert-error">{{ interestError }}</div>
+          }
 
-        <div class="form-group radio-group">
-          <label>Would you ever pay for a premium version?</label>
-          <div class="radio-options">
-            <label class="radio-label">
-              <input type="radio" name="wouldPay" value="yes" [(ngModel)]="wouldPay" /> Yes
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="wouldPay" value="maybe" [(ngModel)]="wouldPay" /> Maybe
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="wouldPay" value="no" [(ngModel)]="wouldPay" /> No
-            </label>
+          <!-- Template-driven radio group (appropriate: simple, no custom validation) -->
+          <div class="form-group radio-group">
+            <label>Would you ever pay for a premium version?</label>
+            <div class="radio-options">
+              <label class="radio-label">
+                <input type="radio" name="wouldPay" value="yes" [(ngModel)]="wouldPay" /> Yes
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="wouldPay" value="maybe" [(ngModel)]="wouldPay" /> Maybe
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="wouldPay" value="no" [(ngModel)]="wouldPay" /> No
+              </label>
+            </div>
           </div>
+
+          @if (wouldPay === 'yes' || wouldPay === 'maybe') {
+            <div class="form-group">
+              <label>What would feel fair per month? (₹)</label>
+              <input type="number" [(ngModel)]="suggestedPriceInr" id="settings-price" placeholder="e.g. 500" />
+            </div>
+          }
+
+          <div class="form-group">
+            <label>Any other thoughts?</label>
+            <textarea [(ngModel)]="comment" rows="3" id="settings-comment" placeholder="Optional"></textarea>
+          </div>
+
+          <button class="btn-primary" (click)="submitInterest()" [disabled]="!wouldPay || interestLoading">
+            {{ interestLoading ? 'Submitting...' : 'Submit Feedback' }}
+          </button>
         </div>
-
-        <div class="form-group" *ngIf="wouldPay === 'yes' || wouldPay === 'maybe'">
-          <label>What would feel fair per month? (₹)</label>
-          <input type="number" [(ngModel)]="suggestedPriceInr" id="settings-price" placeholder="e.g. 500" />
+      } @else {
+        <div class="thank-you-state">
+          <div class="ty-icon">✨</div>
+          <h4>Thank you!</h4>
+          <p>Your feedback is incredibly helpful in deciding what to build next.</p>
         </div>
-
-        <div class="form-group">
-          <label>Any other thoughts?</label>
-          <textarea [(ngModel)]="comment" rows="3" id="settings-comment" placeholder="Optional"></textarea>
-        </div>
-
-        <button class="btn-primary" (click)="submitInterest()" [disabled]="!wouldPay || interestLoading">
-          {{ interestLoading ? 'Submitting...' : 'Submit Feedback' }}
-        </button>
-      </div>
-
-      <div class="thank-you-state" *ngIf="interestSubmitted">
-        <div class="ty-icon">✨</div>
-        <h4>Thank you!</h4>
-        <p>Your feedback is incredibly helpful in deciding what to build next.</p>
-      </div>
+      }
     </div>
   </section>
 

@@ -1,85 +1,85 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import {
+  ReactiveFormsModule,
+  FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth';
+import { UserProfileService } from '@core/user-profile/user-profile.service';
 
+/**
+ * Cross-field validator: newPassword must differ from currentPassword.
+ * Demonstrates custom cross-field validator at the group level.
+ */
+function passwordsDifferentValidator(group: AbstractControl): ValidationErrors | null {
+  const current = group.get('currentPassword')?.value ?? '';
+  const next = group.get('newPassword')?.value ?? '';
+  if (current && next && current === next) {
+    return { samePassword: true };
+  }
+  return null;
+}
+
+/**
+ * SettingsComponent — OnPush CD.
+ *
+ * Demonstrates mixed form strategy (per Angular best practices):
+ *  - Profile section     → Reactive Form (typed, validated)
+ *  - Password section    → Reactive Form with cross-field validator
+ *  - Feedback/Avatar     → Template-driven (FormsModule) — simple, no complex validation needed
+ *
+ * Uses UserProfileService (shared Signal state) for sibling communication
+ * with DashboardComponent — when display name is saved here, the sidebar
+ * updates automatically via Signal without any event bus / Subject needed.
+ */
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+  styleUrls: ['./settings.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit {
-  http = inject(HttpClient);
-  authService = inject(AuthService);
-  
-  user = { email: '', displayName: '', createdAt: '' };
-  
-  // Profile Form
-  displayNameInput = '';
-  profileSuccess = '';
-  
-  // Password Form
-  currentPassword = '';
-  newPassword = '';
-  passwordError = '';
-  passwordSuccess = '';
-  
-  ngOnInit() {
-    this.http.get<any>(`${environment.apiBaseUrl}/me`).subscribe(res => {
-      this.user = res;
-      this.displayNameInput = res.displayName;
-    });
-    // Load saved avatar
-    const savedEmoji = localStorage.getItem('w2v-avatar');
-    if (savedEmoji) this.selectedAvatar = savedEmoji;
-    const savedColor = localStorage.getItem('w2v-avatar-color');
-    if (savedColor) this.selectedAvatarColor = savedColor;
-  }
-  
-  updateProfile() {
-    this.profileSuccess = '';
-    this.http.patch(`${environment.apiBaseUrl}/me`, { displayName: this.displayNameInput }).subscribe(() => {
-      this.user.displayName = this.displayNameInput;
-      this.profileSuccess = 'Profile updated successfully.';
-      this.authService.notifyProfileUpdate();
-      setTimeout(() => this.profileSuccess = '', 3000);
-    });
-  }
-  
-  changePassword() {
-    this.passwordError = '';
-    this.passwordSuccess = '';
-    if (!this.currentPassword || !this.newPassword) return;
-    this.http.post(`${environment.apiBaseUrl}/me/change-password`, {
-      currentPassword: this.currentPassword,
-      newPassword: this.newPassword
-    }).subscribe({
-      next: () => {
-        this.passwordSuccess = 'Password changed successfully.';
-        this.currentPassword = '';
-        this.newPassword = '';
-        setTimeout(() => this.passwordSuccess = '', 3000);
-      },
-      error: (err) => {
-        this.passwordError = err.error?.error || 'Failed to change password.';
-      }
-    });
-  }
-  
-  deleteAccount() {
-    const confirmation = prompt('Type "DELETE" to permanently delete your account and all data.');
-    if (confirmation === 'DELETE') {
-      this.http.delete(`${environment.apiBaseUrl}/me`).subscribe(() => {
-        this.authService.logout();
-      });
-    }
-  }
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
+  readonly authService = inject(AuthService);
+  readonly profileService = inject(UserProfileService);
+  private cdr = inject(ChangeDetectorRef);
 
-  // ── Avatar / Profile Customisation ──────────────────────────────────
+  // ── Reactive Forms ────────────────────────────────────────────────────
+
+  /** Profile form: display name only (email is read-only) */
+  profileForm: FormGroup = this.fb.group({
+    displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(40)]],
+  });
+  profileSuccess = '';
+
+  /** Password form with cross-field validator */
+  passwordForm: FormGroup = this.fb.group(
+    {
+      currentPassword: ['', [Validators.required, Validators.minLength(6)]],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    },
+    { validators: passwordsDifferentValidator }
+  );
+  passwordSuccess = '';
+  passwordError = '';
+
+  // ── Avatar / Template-driven (simple, no validation needed) ──────────
   readonly avatarOptions = [
     '🎤', '🧑‍💻', '🦚', '🌸', '🎵', '🐯',
     '🦋', '🌟', '🎨', '🏔️', '🧡', '💫',
@@ -97,19 +97,12 @@ export class SettingsComponent implements OnInit {
     { label: 'Dusk',    value: 'linear-gradient(135deg, #1a1a2e, #6c47e8)' },
   ];
 
-  selectedAvatar = '🎤';
-  selectedAvatarColor = 'linear-gradient(135deg, #7c5cf7, #e8608a)';
+  // Template-driven bindings for avatar (no validation needed)
+  selectedAvatar = this.profileService.avatarEmoji();
+  selectedAvatarColor = this.profileService.avatarColor();
   avatarSaved = false;
 
-  saveAvatar() {
-    localStorage.setItem('w2v-avatar', this.selectedAvatar);
-    localStorage.setItem('w2v-avatar-color', this.selectedAvatarColor);
-    this.avatarSaved = true;
-    this.authService.notifyProfileUpdate();
-    setTimeout(() => this.avatarSaved = false, 2500);
-  }
-
-  // ── Interest/Feedback Form ───────────────────────────────────────────
+  // ── Feedback (template-driven, radios + textarea) ────────────────────
   wouldPay = '';
   suggestedPriceInr: number | null = null;
   comment = '';
@@ -117,23 +110,121 @@ export class SettingsComponent implements OnInit {
   interestLoading = false;
   interestError = '';
 
-  submitInterest() {
+  // ── Lifecycle ─────────────────────────────────────────────────────────
+
+  ngOnInit(): void {
+    // If profile already loaded (resolver ran), populate the form immediately
+    const profile = this.profileService.profile();
+    if (profile) {
+      this.profileForm.patchValue({ displayName: profile.displayName });
+    } else {
+      // Fallback: load profile if resolver didn't run (direct navigation)
+      this.profileService.loadProfile().subscribe(profile => {
+        this.profileForm.patchValue({ displayName: profile.displayName });
+        this.cdr.markForCheck();
+      });
+    }
+  }
+
+  // ── Convenience getters ────────────────────────────────────────────────
+
+  get displayName() { return this.profileForm.get('displayName')!; }
+  get currentPassword() { return this.passwordForm.get('currentPassword')!; }
+  get newPassword() { return this.passwordForm.get('newPassword')!; }
+
+  hasProfileError(error: string): boolean {
+    return this.displayName.touched && this.displayName.hasError(error);
+  }
+
+  hasPasswordError(controlName: string, error: string): boolean {
+    const ctrl = this.passwordForm.get(controlName)!;
+    return ctrl.touched && ctrl.hasError(error);
+  }
+
+  // ── Form Submit Handlers ────────────────────────────────────────────────
+
+  updateProfile(): void {
+    this.profileForm.markAllAsTouched();
+    if (this.profileForm.invalid) return;
+    this.profileSuccess = '';
+
+    const { displayName } = this.profileForm.value;
+    // UserProfileService updates the Signal → DashboardComponent sidebar refreshes automatically
+    this.profileService.updateDisplayName(displayName).subscribe({
+      next: () => {
+        this.profileSuccess = 'Profile updated successfully.';
+        this.authService.notifyProfileUpdate(); // backward compat
+        this.cdr.markForCheck();
+        setTimeout(() => { this.profileSuccess = ''; this.cdr.markForCheck(); }, 3000);
+      },
+      error: () => {
+        this.profileSuccess = '';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  changePassword(): void {
+    this.passwordForm.markAllAsTouched();
+    if (this.passwordForm.invalid) return;
+    this.passwordError = '';
+    this.passwordSuccess = '';
+
+    const { currentPassword, newPassword } = this.passwordForm.value;
+    this.http.post(`${environment.apiBaseUrl}/me/change-password`, { currentPassword, newPassword }).subscribe({
+      next: () => {
+        this.passwordSuccess = 'Password changed successfully.';
+        this.passwordForm.reset();
+        this.cdr.markForCheck();
+        setTimeout(() => { this.passwordSuccess = ''; this.cdr.markForCheck(); }, 3000);
+      },
+      error: (err) => {
+        this.passwordError = err.error?.error || 'Failed to change password.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  deleteAccount(): void {
+    const confirmation = prompt('Type "DELETE" to permanently delete your account and all data.');
+    if (confirmation === 'DELETE') {
+      this.http.delete(`${environment.apiBaseUrl}/me`).subscribe(() => {
+        this.authService.logout();
+      });
+    }
+  }
+
+  // ── Avatar ─────────────────────────────────────────────────────────────
+
+  saveAvatar(): void {
+    // UserProfileService.saveAvatar() updates Signals → DashboardComponent sidebar refreshes
+    this.profileService.saveAvatar(this.selectedAvatar, this.selectedAvatarColor);
+    this.avatarSaved = true;
+    this.authService.notifyProfileUpdate(); // backward compat
+    setTimeout(() => { this.avatarSaved = false; this.cdr.markForCheck(); }, 2500);
+  }
+
+  // ── Feedback ────────────────────────────────────────────────────────────
+
+  submitInterest(): void {
     if (!this.wouldPay) return;
     this.interestLoading = true;
     this.interestError = '';
     this.http.post(`${environment.apiBaseUrl}/interest`, {
       wouldPay: this.wouldPay,
       suggestedPriceInr: this.suggestedPriceInr,
-      comment: this.comment
+      comment: this.comment,
     }).subscribe({
       next: () => {
         this.interestLoading = false;
         this.interestSubmitted = true;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.interestLoading = false;
         this.interestError = err.error?.error || 'Failed to submit. Please try again.';
-      }
+        this.cdr.markForCheck();
+      },
     });
   }
 }

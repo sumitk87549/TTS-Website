@@ -6,7 +6,7 @@ import { throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
-  const token = authService.token;
+  const token = authService.token(); // Signal read
 
   if (token && req.url.startsWith('http')) {
     req = req.clone({

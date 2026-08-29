@@ -3,7 +3,7 @@
   <!-- ── Studio Heading ── -->
   <div class="studio-heading">
     <h1 class="studio-title gradient-text">GENERATE VOICE-OVER ACCORDING TO YOUR REQUIREMENT</h1>
-    <p class="studio-subtitle">shorts · reels · video narration · audiobooks · podcasts · announcements & more</p>
+    <p class="studio-subtitle">shorts · reels · video narration · audiobooks · podcasts · announcements &amp; more</p>
   </div>
 
   <!-- ── Top Bar ── -->
@@ -16,14 +16,23 @@
       </div>
 
       <!-- Project -->
-      <select id="project-select" class="control-select project-select" [(ngModel)]="selectedProjectId"
+      <select id="project-select" class="control-select project-select"
+        [ngModel]="state.selectedProjectId()"
+        (ngModelChange)="state.setSelectedProjectId($event)"
         aria-label="Select project">
         <option [ngValue]="null">No project ▾</option>
-        <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+        @for (p of state.projects(); track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}</option>
+        }
       </select>
     </div>
 
     <div class="right-controls">
+      <!-- Script preset button -->
+      <button class="badge-soon btn-preset" (click)="applyRandomPreset()"
+        [appTooltip]="'Apply a random script example to get started'">
+        🎲 Try Example
+      </button>
       <span class="badge-soon" title="Multi-speaker coming soon">Multi-speaker · soon</span>
     </div>
   </div>
@@ -31,191 +40,65 @@
   <!-- ── Main Grid ── -->
   <div class="studio-grid">
 
-    <!-- Left: Editor + Controls -->
+    <!-- Left: Script Editor + Settings + Generate -->
     <div class="editor-col">
 
-      <!-- Text Editor -->
-      <div class="editor-section">
-        <div class="editor-header">
-          <span class="script-pill">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            Script Editor
-          </span>
-          <div class="editor-actions">
-            <button class="editor-action-btn" (click)="pasteFromClipboard()" title="Paste from clipboard" *ngIf="!text">
-              📋 Paste
-            </button>
-            <button class="editor-action-btn" (click)="clearText()" title="Clear text" *ngIf="text">
-              ✕ Clear
-            </button>
-          </div>
-        </div>
-        <textarea id="tts-text-input" [(ngModel)]="text" (ngModelChange)="saveDraft()"
-          [placeholder]="currentPlaceholder" [maxLength]="maxChars" aria-label="TTS text input" rows="8">
-        </textarea>
-        <div class="char-bar">
-          <div class="char-bar-fill" [style.width.%]="charsPercent" [class.danger]="text.length > maxChars"></div>
-        </div>
-        <!-- Text stats row -->
-        <div class="text-stats" *ngIf="text.trim()">
-          <span class="stat-chip">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            Spoken: {{ estimatedSpokenDuration }}
-          </span>
-          <span class="stat-chip">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-            Gen: {{ estimatedGenerationTime }}
-          </span>
-          <span class="stat-chip">{{ text.trim().split(/\s+/).length }} words</span>
-        </div>
-      </div>
+      <!-- Script Editor child component -->
+      <app-script-editor></app-script-editor>
 
-      <!-- ── Script Warning (Hindi/Devanagari) ── -->
-      <div class="script-warning">
-        <div class="warning-icon">⚠️</div>
-        <div class="warning-content">
-          <p>For <strong>Hindi/Indian accent</strong>, type in Devanagari font — <em>e.g. <span
-                class="devanagari-example">नमस्ते, आज का दिन</span></em></p>
-          <p>Latin/English text will give <strong>English accent</strong>, even for Hindi words</p>
-          <p>Mixture of Latin + Devanagari is recommended — <em>e.g. <span class="devanagari-example">Hello! आज
-                hum</span> बात करेंगे</em></p>
-        </div>
-      </div>
+      <!-- Voice Settings child component -->
+      <app-voice-settings></app-voice-settings>
 
-      <!-- ── Voice Settings (Always Open, Compact) ── -->
-      <div class="settings-compact">
-        <div class="settings-compact-header">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3" />
-            <path
-              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-          <span class="settings-title">Voice Settings</span>
-        </div>
-        <div class="settings-compact-row">
-          <!-- Speed Dropdown -->
-          <div class="compact-control speed-control">
-            <label class="compact-label">Speed</label>
-            <select class="compact-select" [(ngModel)]="speed" (ngModelChange)="selectSpeed($event)" id="speed-select">
-              <option *ngFor="let s of speedPresets" [ngValue]="s.value">{{ s.label }}</option>
-            </select>
-          </div>
-          <!-- Language Dropdown -->
-          <div class="compact-control lang-control">
-            <label class="compact-label">Language</label>
-            <select class="compact-select" [(ngModel)]="selectedLang" (ngModelChange)="selectLang($event)"
-              id="lang-select">
-              <option *ngFor="let lang of langOptions" [ngValue]="lang.value">{{ lang.label }}</option>
-            </select>
-          </div>
-          <!-- Quality Dropdown -->
-          <div class="compact-control quality-control">
-            <label class="compact-label">Quality</label>
-            <select class="compact-select quality-select" [ngModel]="selectedQuality.steps"
-              (ngModelChange)="selectQualityBySteps($event)" id="quality-select">
-              <option *ngFor="let q of qualityPresets" [ngValue]="q.steps">{{ q.label }} — {{ q.description }}</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Generate Audio Button (centered by default, right + small after generation) ── -->
-      <div class="generate-action-area" [class.generated]="audioUrl">
-        <span class="generate-hint" *ngIf="!text.trim() && !generating && !audioUrl">Add some text first</span>
-        <button id="btn-generate-audio" class="btn-generate" [class.btn-regenerate-mode]="audioUrl" (click)="generate()"
-          [disabled]="generating || !text.trim() || text.length > maxChars || !selectedVoice"
-          [class.loading]="generating">
-          <span class="btn-icon" *ngIf="!generating && !audioUrl">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
-          </span>
-          <span class="btn-icon" *ngIf="!generating && audioUrl">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-          </span>
-          <span class="btn-spinner" *ngIf="generating"></span>
-          {{ generating ? 'Generating…' : (audioUrl ? 'Re-generate' : 'Generate Audio') }}
+      <!-- ── Generate Audio Button ── -->
+      <div class="generate-action-area" [class.generated]="state.audioUrl()">
+        @if (!state.text().trim() && !state.generating() && !state.audioUrl()) {
+          <span class="generate-hint">Add some text first</span>
+        }
+        <button id="btn-generate-audio" class="btn-generate"
+          [class.btn-regenerate-mode]="state.audioUrl()"
+          (click)="state.generate()"
+          [disabled]="state.generating() || !state.text().trim() || state.text().length > state.maxChars || !state.selectedVoice()"
+          [class.loading]="state.generating()">
+          @if (!state.generating() && !state.audioUrl()) {
+            <span class="btn-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </span>
+          }
+          @if (!state.generating() && state.audioUrl()) {
+            <span class="btn-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </span>
+          }
+          @if (state.generating()) {
+            <span class="btn-spinner"></span>
+          }
+          {{ state.generating() ? 'Generating…' : (state.audioUrl() ? 'Re-generate' : 'Generate Audio') }}
         </button>
       </div>
 
     </div><!-- /editor-col -->
 
-    <!-- Right: Voice Picker -->
-    <app-voice-picker [maleVoices]="maleVoices" [femaleVoices]="femaleVoices" [selectedVoice]="selectedVoice"
-      [voiceUseCases]="voiceUseCases" [previewLoadingId]="previewLoadingId" [previewPlayingId]="previewPlayingId"
-      (voiceSelected)="selectVoice($event)"
-      (previewRequested)="playVoicePreview($event.voice, $event.event)"></app-voice-picker>
+    <!-- Right: Voice Picker child component -->
+    <app-voice-picker
+      [maleVoices]="state.maleVoices()"
+      [femaleVoices]="state.femaleVoices()"
+      [selectedVoice]="state.selectedVoice()"
+      [voiceUseCases]="state.voiceUseCases"
+      [previewLoadingId]="state.previewLoadingId()"
+      [previewPlayingId]="state.previewPlayingId()"
+      (voiceSelected)="state.selectVoice($event)"
+      (previewRequested)="state.playVoicePreview($event.voice, $event.event)">
+    </app-voice-picker>
+
   </div><!-- /studio-grid -->
 
-  <!-- ── Result ── -->
-  <div class="result-section" *ngIf="error || audioUrl || generating">
-
-    <div class="error-msg" *ngIf="error">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="15" y1="9" x2="9" y2="15" />
-        <line x1="9" y1="9" x2="15" y2="15" />
-      </svg>
-      <div class="error-content">
-        <span class="error-text">{{ error }}</span>
-        <button class="retry-btn" (click)="generate()" *ngIf="generationState === 'failed'">
-          Try Again
-        </button>
-      </div>
-    </div>
-
-    <!-- Mission Control loading panel -->
-    <app-mission-control *ngIf="generating" [charCount]="text.length" [voiceName]="selectedVoice?.display_name || ''"
-      [language]="selectedLang === 'na' ? 'Auto' : selectedLang === 'hi' ? 'Hindi' : 'English'"
-      [quality]="selectedQuality.label" [speed]="speed" [elapsedMs]="generationElapsedMs"
-      [estimatedSeconds]="estimatedGenerationSeconds"></app-mission-control>
-
-    <!-- Audio result card -->
-    <div class="audio-result-card" *ngIf="audioUrl">
-      <div class="audio-result-header">
-        <div class="audio-ready-pill">
-          <span class="audio-ready-dot"></span>
-          Audio Ready
-        </div>
-        <span class="generation-time" *ngIf="generationElapsedMs > 0">
-          Generated in {{ (generationElapsedMs / 1000).toFixed(1) }}s
-        </span>
-      </div>
-      <div class="audio-result-meta">
-        <span class="meta-chip">{{ selectedVoice?.display_name }}</span>
-        <span class="meta-chip">{{ selectedLang === 'na' ? 'Auto' : selectedLang === 'hi' ? 'Hindi' : 'English'
-          }}</span>
-        <span class="meta-chip">{{ speed }}×</span>
-        <span class="meta-chip">{{ selectedQuality.label }}</span>
-        <span class="meta-chip">{{ text.length }} chars</span>
-      </div>
-      <div class="audio-row">
-        <audio #audioPlayerRef [src]="audioUrl" controls autoplay id="tts-audio-player"></audio>
-      </div>
-      <div class="audio-actions">
-        <a [href]="audioUrl" download="words2voice_audio.wav" class="btn-download" id="btn-download-audio"
-          (click)="trackDownload()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          Download WAV
-        </a>
-      </div>
-    </div>
-  </div>
+  <!-- ── Audio Result child component ── -->
+  <app-audio-result></app-audio-result>
 
   <!-- ── Studio Footer ── -->
   <div class="studio-footer">
@@ -236,7 +119,6 @@
       <a routerLink="/terms" class="footer-link">Terms</a>
     </div>
     <div class="footer-right-col">
-      <!-- <span class="badge-soon" title="Multi-speaker coming soon">🔜 Multi-speaker</span> -->
       <span class="footer-copy">© 2025 words2voice · Free forever</span>
     </div>
   </div>

@@ -168,7 +168,43 @@
       box-shadow: 0 0 0 3px var(--accent-subtle);
     }
   }
+
+  // Reactive Forms: invalid + touched state
+  &.has-error input {
+    border-color: var(--danger, #ef4444);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+  }
 }
+
+// Inline field-level validation error message
+.field-error {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--danger, #ef4444);
+  font-weight: 500;
+  animation: fade-in 0.15s ease-out;
+}
+
+// Progressive password strength hints (signup)
+.password-hints {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+
+  .hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: color 0.2s;
+
+    &.ok {
+      color: var(--success, #22c55e);
+    }
+  }
+}
+
 
 .btn-submit {
   width: 100%;

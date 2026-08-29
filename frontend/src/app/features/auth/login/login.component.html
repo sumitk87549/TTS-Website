@@ -10,6 +10,7 @@
       </div>
     </div>
   </div>
+
   <div class="auth-form-side">
     <div class="auth-card">
       <a routerLink="/" class="auth-logo">
@@ -19,27 +20,58 @@
       <h2>Log in to your studio</h2>
       <p class="auth-subtitle">Enter your credentials to continue.</p>
 
-      <div class="error-banner" *ngIf="error">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="15" y1="9" x2="9" y2="15" />
-          <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-        {{ error }}
-      </div>
+      <!-- Server-side error banner -->
+      @if (serverError) {
+        <div class="error-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          {{ serverError }}
+        </div>
+      }
 
-      <form (ngSubmit)="onSubmit()">
-        <div class="form-group">
+      <!-- Reactive Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+        <!-- Email Field -->
+        <div class="form-group" [class.has-error]="hasError('email', 'required') || hasError('email', 'email')">
           <label for="login-email">Email Address</label>
-          <input type="email" id="login-email" [(ngModel)]="email" name="email" required placeholder="name@example.com"
+          <input
+            type="email"
+            id="login-email"
+            formControlName="email"
+            placeholder="name@example.com"
             autocomplete="email" />
+          @if (hasError('email', 'required')) {
+            <span class="field-error">Email is required.</span>
+          } @else if (hasError('email', 'email')) {
+            <span class="field-error">Please enter a valid email address.</span>
+          }
         </div>
-        <div class="form-group">
+
+        <!-- Password Field -->
+        <div class="form-group" [class.has-error]="hasError('password', 'required') || hasError('password', 'minlength')">
           <label for="login-password">Password</label>
-          <input type="password" id="login-password" [(ngModel)]="password" name="password" required
-            placeholder="••••••••" autocomplete="current-password" />
+          <input
+            type="password"
+            id="login-password"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password" />
+          @if (hasError('password', 'required')) {
+            <span class="field-error">Password is required.</span>
+          } @else if (hasError('password', 'minlength')) {
+            <span class="field-error">Password must be at least 6 characters.</span>
+          }
         </div>
-        <button type="submit" class="btn-submit" [disabled]="loading || !email || !password" id="btn-login-submit">
+
+        <button
+          type="submit"
+          class="btn-submit"
+          id="btn-login-submit"
+          [disabled]="loading">
           {{ loading ? 'Logging in...' : 'Log In' }}
         </button>
       </form>

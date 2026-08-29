@@ -233,7 +233,25 @@
     /* email field — visually dimmed but styled */
     border-style: dashed;
   }
+
+  // Reactive Forms: touched + invalid state
+  &.has-error input,
+  &.has-error textarea {
+    border-color: var(--danger, #ef4444);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
 }
+
+// Inline field-level validation error
+.field-error {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--danger, #ef4444);
+  font-weight: 500;
+  animation: fade-in 0.15s ease-out;
+}
+
 
 .btn-primary {
   padding: 0.75rem 1.75rem;
