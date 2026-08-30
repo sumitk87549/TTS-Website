@@ -28,7 +28,7 @@ export interface QualityPreset {
   description: string;
 }
 
-export type VoiceTab = 'Male' | 'Female' | 'My Voices';
+export type VoiceTab = 'Male' | 'Female';
 export type GenerationState = 'idle' | 'processing' | 'ready' | 'failed';
 export type StudioLanguage = 'na' | 'hi' | 'en';
 

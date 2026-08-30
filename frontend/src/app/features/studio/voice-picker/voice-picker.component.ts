@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { Voice, VoiceTab } from '../models/studio.models';
 
 @Component({
   selector: 'app-voice-picker',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './voice-picker.component.html',
   styleUrls: ['./voice-picker.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

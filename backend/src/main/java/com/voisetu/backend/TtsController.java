@@ -29,7 +29,7 @@ import java.util.Map;
 public class TtsController {
 
     private static final Logger log = LoggerFactory.getLogger(TtsController.class);
-    private static final int PREVIEW_MAX_PER_HOUR = 5;
+    private static final int PREVIEW_MAX_PER_HOUR = 30;
 
     private final SupertonicClient supertonicClient;
     private final JdbcTemplate jdbcTemplate;

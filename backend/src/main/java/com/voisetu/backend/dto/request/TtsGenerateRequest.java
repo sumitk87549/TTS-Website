@@ -1,5 +1,6 @@
 package com.voisetu.backend.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 
 /**
@@ -14,6 +15,7 @@ public record TtsGenerateRequest(
         @Size(max = 1000, message = "Text must not exceed 1000 characters per request")
         String text,
 
+        @JsonAlias({"engineVoiceId", "engine_voice_id", "voice_id"})
         @NotBlank(message = "Voice ID is required")
         @Pattern(regexp = "[MF][1-5]", message = "Voice ID must be one of: M1–M5 or F1–F5")
         String voiceId,

@@ -16,7 +16,7 @@
       </div>
 
       <!-- Project -->
-      <select id="project-select" class="control-select project-select"
+      <!-- <select id="project-select" class="control-select project-select"
         [ngModel]="state.selectedProjectId()"
         (ngModelChange)="state.setSelectedProjectId($event)"
         aria-label="Select project">
@@ -24,7 +24,7 @@
         @for (p of state.projects(); track p.id) {
           <option [ngValue]="p.id">{{ p.name }}</option>
         }
-      </select>
+      </select> -->
     </div>
 
     <div class="right-controls">
@@ -52,30 +52,29 @@
       <!-- ── Generate Audio Button ── -->
       <div class="generate-action-area" [class.generated]="state.audioUrl()">
         @if (!state.text().trim() && !state.generating() && !state.audioUrl()) {
-          <span class="generate-hint">Add some text first</span>
+        <span class="generate-hint">Add some text first</span>
         }
-        <button id="btn-generate-audio" class="btn-generate"
-          [class.btn-regenerate-mode]="state.audioUrl()"
+        <button id="btn-generate-audio" class="btn-generate" [class.btn-regenerate-mode]="state.audioUrl()"
           (click)="state.generate()"
           [disabled]="state.generating() || !state.text().trim() || state.text().length > state.maxChars || !state.selectedVoice()"
           [class.loading]="state.generating()">
           @if (!state.generating() && !state.audioUrl()) {
-            <span class="btn-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-            </span>
+          <span class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+          </span>
           }
           @if (!state.generating() && state.audioUrl()) {
-            <span class="btn-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-              </svg>
-            </span>
+          <span class="btn-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </span>
           }
           @if (state.generating()) {
-            <span class="btn-spinner"></span>
+          <span class="btn-spinner"></span>
           }
           {{ state.generating() ? 'Generating…' : (state.audioUrl() ? 'Re-generate' : 'Generate Audio') }}
         </button>
@@ -84,13 +83,9 @@
     </div><!-- /editor-col -->
 
     <!-- Right: Voice Picker child component -->
-    <app-voice-picker
-      [maleVoices]="state.maleVoices()"
-      [femaleVoices]="state.femaleVoices()"
-      [selectedVoice]="state.selectedVoice()"
-      [voiceUseCases]="state.voiceUseCases"
-      [previewLoadingId]="state.previewLoadingId()"
-      [previewPlayingId]="state.previewPlayingId()"
+    <app-voice-picker [maleVoices]="state.maleVoices()" [femaleVoices]="state.femaleVoices()"
+      [selectedVoice]="state.selectedVoice()" [voiceUseCases]="state.voiceUseCases"
+      [previewLoadingId]="state.previewLoadingId()" [previewPlayingId]="state.previewPlayingId()"
       (voiceSelected)="state.selectVoice($event)"
       (previewRequested)="state.playVoicePreview($event.voice, $event.event)">
     </app-voice-picker>
@@ -109,7 +104,6 @@
     <div class="footer-links-col">
       <span class="footer-links-label">Product</span>
       <a routerLink="/studio" class="footer-link">Studio</a>
-      <a routerLink="/history" class="footer-link">History</a>
       <a routerLink="/settings" class="footer-link">Settings</a>
     </div>
     <div class="footer-links-col">

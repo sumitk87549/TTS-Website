@@ -22,8 +22,21 @@ export class LandingComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private analytics = inject(AnalyticsService);
 
-  voices: any[] = [];
-  selectedVoiceId = '';
+  DEFAULT_VOICES = [
+    { engineVoiceId: 'M1', displayName: 'Rohan', gender: 'male', styleTag: 'Calm' },
+    { engineVoiceId: 'M2', displayName: 'Aryan', gender: 'male', styleTag: 'Dynamic' },
+    { engineVoiceId: 'M3', displayName: 'Kabir', gender: 'male', styleTag: 'Steady' },
+    { engineVoiceId: 'M4', displayName: 'Dev', gender: 'male', styleTag: 'Warm' },
+    { engineVoiceId: 'M5', displayName: 'Vihaan', gender: 'male', styleTag: 'High Energy' },
+    { engineVoiceId: 'F1', displayName: 'Isha', gender: 'female', styleTag: 'Warm' },
+    { engineVoiceId: 'F2', displayName: 'Meera', gender: 'female', styleTag: 'Calm' },
+    { engineVoiceId: 'F3', displayName: 'Priya', gender: 'female', styleTag: 'Dynamic' },
+    { engineVoiceId: 'F4', displayName: 'Kavya', gender: 'female', styleTag: 'High Energy' },
+    { engineVoiceId: 'F5', displayName: 'Naina', gender: 'female', styleTag: 'Steady' }
+  ];
+
+  voices: any[] = this.DEFAULT_VOICES;
+  selectedVoiceId = 'M1';
   textToSynthesize = 'कम बोलो, ज़्यादा करो — let your results speak for you.';
   isLoading = false;
   audioUrl: string | null = null;
@@ -40,14 +53,18 @@ export class LandingComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.ngZone.run(() => {
-            this.voices = data || [];
-            if (this.voices.length > 0) {
-              this.selectedVoiceId = this.voices[0].engine_voice_id;
+            if (data && data.length > 0) {
+              this.voices = data;
+              const firstVoice = this.voices[0];
+              this.selectedVoiceId = this.getVoiceId(firstVoice);
             }
             this.cdr.markForCheck();
           });
         },
-        error: (err) => console.error('Failed to load voices', err)
+        error: (err) => {
+          console.error('Failed to load voices from server, using default list', err);
+          this.cdr.markForCheck();
+        }
       });
 
     this.http.get<any>(`${environment.apiBaseUrl}/public/stats`)
@@ -78,7 +95,10 @@ export class LandingComponent implements OnInit {
       return;
     }
 
-    this.analytics.track('preview_listen_clicked', { textLength: this.textLength, voiceId: this.selectedVoiceId });
+    const activeVoiceId = this.selectedVoiceId ||
+      (this.voices.length > 0 ? (this.voices[0].engineVoiceId || this.voices[0].engine_voice_id) : 'M1');
+
+    this.analytics.track('preview_listen_clicked', { textLength: this.textLength, voiceId: activeVoiceId });
 
     this.isLoading = true;
     this.errorMessage = null;
@@ -91,7 +111,8 @@ export class LandingComponent implements OnInit {
 
     const payload = {
       text: this.textToSynthesize,
-      engineVoiceId: this.selectedVoiceId
+      voiceId: activeVoiceId,
+      engineVoiceId: activeVoiceId
     };
 
     this.http.post(`${environment.apiBaseUrl}/public/tts/preview`, payload, { responseType: 'blob' })
@@ -118,5 +139,17 @@ export class LandingComponent implements OnInit {
           });
         }
       });
+  }
+
+  getVoiceId(voice: any): string {
+    return voice?.engineVoiceId || voice?.engine_voice_id || voice?.voiceId || 'M1';
+  }
+
+  getVoiceName(voice: any): string {
+    return voice?.displayName || voice?.display_name || voice?.name || voice?.engineVoiceId || 'Voice';
+  }
+
+  getVoiceStyle(voice: any): string {
+    return voice?.styleTag || voice?.style_tag || voice?.style || 'Standard';
   }
 }

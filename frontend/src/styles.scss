@@ -213,10 +213,22 @@ button {
 audio {
   border-radius: 0.5rem;
   outline: none;
+  color-scheme: dark;
 }
 
 audio::-webkit-media-controls-panel {
   background: var(--bg-elevated);
+  color-scheme: dark;
+}
+
+[data-theme="day"] audio {
+  color-scheme: light !important;
+  background: #ffffff !important;
+}
+
+[data-theme="day"] audio::-webkit-media-controls-panel {
+  background: #ffffff !important;
+  color-scheme: light !important;
 }
 
 /* ── Keyframe Animations ── */

@@ -107,8 +107,8 @@
       <div class="demo-controls">
         <div class="voice-select-wrap">
           <select [(ngModel)]="selectedVoiceId" id="voice-select">
-            <option *ngFor="let voice of voices" [value]="voice.engine_voice_id">
-              {{ voice.display_name }} · {{ voice.style_tag }}
+            <option *ngFor="let voice of voices" [value]="getVoiceId(voice)">
+              {{ getVoiceName(voice) }} · {{ getVoiceStyle(voice) }}
             </option>
           </select>
         </div>

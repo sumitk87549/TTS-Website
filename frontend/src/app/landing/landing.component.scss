@@ -644,18 +644,46 @@
     border: 1.5px solid var(--accent-glow);
     box-shadow: 0 0 12px rgba(124, 92, 247, 0.15), 0 2px 8px rgba(0,0,0,0.12);
     display: block;
-    /* Chromium audio accent */
     accent-color: var(--accent);
     padding: 0 0.25rem;
+    color-scheme: dark;
+
+    &::-webkit-media-controls-panel {
+      color-scheme: dark;
+    }
   }
 }
 
-/* ── Day mode: audio player needs strong contrast ── */
-[data-theme="day"] .audio-result {
+/* ── Day mode: audio player needs strong contrast with dark icons on white ── */
+[data-theme="day"] .audio-result,
+html[data-theme="day"] .audio-result,
+:host-context([data-theme="day"]) .audio-result {
   audio {
-    background: #f0eeff;
-    border: 2px solid var(--accent);
-    box-shadow: 0 2px 12px rgba(99, 65, 220, 0.2), 0 1px 4px rgba(0,0,0,0.08);
+    color-scheme: light !important;
+    background: #ffffff !important;
+    border: 2px solid var(--accent) !important;
+    box-shadow: 0 2px 14px rgba(99, 65, 220, 0.18), 0 1px 4px rgba(0,0,0,0.06) !important;
+
+    &::-webkit-media-controls-panel {
+      background-color: #ffffff !important;
+      color-scheme: light !important;
+    }
+  }
+}
+
+/* ── Night mode: audio player dark background with white icons ── */
+[data-theme="night"] .audio-result,
+html[data-theme="night"] .audio-result,
+:host-context([data-theme="night"]) .audio-result {
+  audio {
+    color-scheme: dark !important;
+    background: #181524 !important;
+    border: 1.5px solid var(--accent-glow) !important;
+
+    &::-webkit-media-controls-panel {
+      background-color: #181524 !important;
+      color-scheme: dark !important;
+    }
   }
 }
 
