@@ -1,4 +1,6 @@
-package com.voisetu.backend;
+package com.voisetu.backend.security;
+
+import com.voisetu.backend.controller.AdminController;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

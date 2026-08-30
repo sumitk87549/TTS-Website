@@ -1,7 +1,7 @@
 package com.voisetu.backend.service;
 
-import com.voisetu.backend.DashboardRepository;
-import com.voisetu.backend.SupertonicClient;
+import com.voisetu.backend.repository.DashboardRepository;
+import com.voisetu.backend.client.SupertonicClient;
 import com.voisetu.backend.config.AppProperties;
 import com.voisetu.backend.dto.request.TtsGenerateRequest;
 import com.voisetu.backend.exception.DailyLimitExceededException;

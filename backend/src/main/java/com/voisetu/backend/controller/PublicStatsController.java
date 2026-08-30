@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;

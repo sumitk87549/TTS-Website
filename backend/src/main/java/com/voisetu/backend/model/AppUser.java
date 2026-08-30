@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.model;
 
 import java.time.Instant;
 

@@ -1,4 +1,6 @@
-package com.voisetu.backend;
+package com.voisetu.backend.repository;
+
+import com.voisetu.backend.model.AppUser;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

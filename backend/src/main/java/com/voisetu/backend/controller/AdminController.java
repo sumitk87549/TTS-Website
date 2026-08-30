@@ -1,4 +1,6 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
+
+import com.voisetu.backend.security.SecurityConfig;
 
 import com.voisetu.backend.exception.AppException;
 import org.springframework.http.HttpStatus;

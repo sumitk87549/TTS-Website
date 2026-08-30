@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.repository;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;

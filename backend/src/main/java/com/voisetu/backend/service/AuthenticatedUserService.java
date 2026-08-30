@@ -1,6 +1,6 @@
 package com.voisetu.backend.service;
 
-import com.voisetu.backend.AppUserRepository;
+import com.voisetu.backend.repository.AppUserRepository;
 import com.voisetu.backend.exception.ResourceNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;

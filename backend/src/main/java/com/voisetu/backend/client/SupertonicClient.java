@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.client;
 
 import com.voisetu.backend.exception.TtsEngineTimeoutException;
 import com.voisetu.backend.exception.TtsEngineUnavailableException;

@@ -1,4 +1,6 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
+
+import com.voisetu.backend.client.SupertonicClient;
 
 import com.voisetu.backend.dto.request.TtsPreviewRequest;
 import com.voisetu.backend.dto.response.VoiceResponse;

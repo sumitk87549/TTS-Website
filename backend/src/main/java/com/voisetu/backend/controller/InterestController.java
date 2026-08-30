@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
 
 import com.voisetu.backend.dto.request.InterestRequest;
 import com.voisetu.backend.service.AuthenticatedUserService;

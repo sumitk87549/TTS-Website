@@ -1,4 +1,8 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
+
+import com.voisetu.backend.model.AppUser;
+
+import com.voisetu.backend.repository.AppUserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;

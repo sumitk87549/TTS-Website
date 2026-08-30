@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
 
 import com.voisetu.backend.dto.request.ContactRequest;
 import com.voisetu.backend.exception.AppException;

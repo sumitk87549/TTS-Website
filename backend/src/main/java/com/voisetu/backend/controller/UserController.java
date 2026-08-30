@@ -1,4 +1,10 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
+
+import com.voisetu.backend.model.AppUser;
+
+import com.voisetu.backend.repository.DashboardRepository;
+
+import com.voisetu.backend.repository.AppUserRepository;
 
 import com.voisetu.backend.dto.request.ChangePasswordRequest;
 import com.voisetu.backend.dto.request.UpdateProfileRequest;

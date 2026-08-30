@@ -1,4 +1,10 @@
-package com.voisetu.backend;
+package com.voisetu.backend.security;
+
+import com.voisetu.backend.model.AppUser;
+
+import com.voisetu.backend.repository.AppUserRepository;
+
+import com.voisetu.backend.controller.AdminController;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;

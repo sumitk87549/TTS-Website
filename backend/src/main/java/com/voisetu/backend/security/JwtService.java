@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -1,4 +1,4 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
 
 import com.voisetu.backend.dto.response.VoiceResponse;
 import org.springframework.jdbc.core.JdbcTemplate;

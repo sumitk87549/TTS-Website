@@ -1,4 +1,6 @@
-package com.voisetu.backend;
+package com.voisetu.backend.controller;
+
+import com.voisetu.backend.repository.DashboardRepository;
 
 import com.voisetu.backend.dto.response.GenerationResponse;
 import com.voisetu.backend.service.AuthenticatedUserService;
