@@ -1,41 +1,43 @@
 package com.voisetu.backend;
 
+import com.voisetu.backend.dto.request.InterestRequest;
+import com.voisetu.backend.service.AuthenticatedUserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Monetisation interest signal endpoint.
+ * POST /api/interest — authenticated users indicate willingness to pay.
+ */
 @RestController
 @RequestMapping("/api/interest")
 public class InterestController {
 
-    private final AppUserRepository userRepository;
-    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final JdbcTemplate jdbcTemplate;
 
-    public InterestController(AppUserRepository userRepository,
-                              org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
-        this.userRepository = userRepository;
+    public InterestController(AuthenticatedUserService authenticatedUserService,
+                              JdbcTemplate jdbcTemplate) {
+        this.authenticatedUserService = authenticatedUserService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @PostMapping
-    public ResponseEntity<?> submitInterest(Authentication auth, @RequestBody Map<String, Object> body) {
-        Long userId = userRepository.findByEmail(auth.getName()).orElseThrow().id();
+    public ResponseEntity<Map<String, String>> submitInterest(
+            Authentication auth,
+            @Valid @RequestBody InterestRequest request) {
 
-        String wouldPay = (String) body.get("wouldPay");
-        if (!java.util.Set.of("yes", "no", "maybe").contains(wouldPay)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid value for wouldPay. Use yes, no, or maybe."));
-        }
-
-        Number priceNum = (Number) body.get("suggestedPriceInr");
-        Integer suggestedPrice = priceNum != null ? priceNum.intValue() : null;
-        String comment = (String) body.get("comment");
+        Long userId = authenticatedUserService.userId(auth);
 
         jdbcTemplate.update(
                 "INSERT INTO interest_signal (user_id, would_pay, suggested_price_inr, comment) " +
                 "VALUES (?, ?, ?, ?)",
-                userId, wouldPay, suggestedPrice, comment
+                userId, request.wouldPay(), request.suggestedPriceInr(), request.comment()
         );
 
         return ResponseEntity.ok(Map.of("message", "Thank you for sharing your thoughts!"));

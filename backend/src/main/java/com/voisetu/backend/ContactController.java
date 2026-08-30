@@ -1,68 +1,51 @@
 package com.voisetu.backend;
 
+import com.voisetu.backend.dto.request.ContactRequest;
+import com.voisetu.backend.exception.AppException;
+import com.voisetu.backend.service.RateLimitService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
+/**
+ * Public contact form endpoint.
+ * POST /api/public/contact
+ *
+ * Rate-limited to 5 submissions per IP per hour via shared {@link RateLimitService}.
+ * Structural validation via Bean Validation (@Valid).
+ */
 @RestController
 @RequestMapping("/api/public/contact")
 public class ContactController {
 
+    private static final int CONTACT_MAX_PER_HOUR = 5;
+
     private final JdbcTemplate jdbcTemplate;
+    private final RateLimitService rateLimitService;
 
-    // Same simple in-memory per-IP rate limiter as the public TTS endpoint: 5/hour
-    private final Map<String, RateLimitEntry> rateLimits = new ConcurrentHashMap<>();
-
-    private static class RateLimitEntry {
-        AtomicInteger count = new AtomicInteger(0);
-        Instant resetTime = Instant.now().plus(1, ChronoUnit.HOURS);
-    }
-
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
-
-    public ContactController(JdbcTemplate jdbcTemplate) {
+    public ContactController(JdbcTemplate jdbcTemplate, RateLimitService rateLimitService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.rateLimitService = rateLimitService;
     }
 
     @PostMapping
-    public ResponseEntity<?> submit(@RequestBody Map<String, String> body, HttpServletRequest request) {
-        String ip = request.getRemoteAddr();
+    public ResponseEntity<Map<String, String>> submit(@Valid @RequestBody ContactRequest request,
+                                                       HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
 
-        // Evict expired windows and apply rate limit
-        rateLimits.entrySet().removeIf(e -> e.getValue().resetTime.isBefore(Instant.now()));
-        RateLimitEntry entry = rateLimits.computeIfAbsent(ip, k -> new RateLimitEntry());
-        if (entry.count.incrementAndGet() > 5) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(Map.of("error", "Too many messages sent. Please try again in an hour."));
-        }
-
-        String name    = body.getOrDefault("name", "").trim();
-        String email   = body.getOrDefault("email", "").trim();
-        String message = body.getOrDefault("message", "").trim();
-
-        if (name.isEmpty() || email.isEmpty() || message.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Name, email, and message are all required."));
-        }
-        if (!EMAIL_PATTERN.matcher(email).matches()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "That doesn't look like a valid email address."));
-        }
-        if (message.length() > 2000) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Message is too long (max 2000 characters)."));
+        if (!rateLimitService.isAllowed(clientIp, CONTACT_MAX_PER_HOUR, "contact")) {
+            throw new AppException(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMIT_EXCEEDED",
+                    "Too many messages sent. Please try again in an hour.");
         }
 
         jdbcTemplate.update(
                 "INSERT INTO contact_message (name, email, message) VALUES (?, ?, ?)",
-                name, email, message
+                request.name().trim(), request.email().trim(), request.message().trim()
         );
 
         return ResponseEntity.ok(Map.of("message", "Thanks for reaching out! I'll get back to you soon."));

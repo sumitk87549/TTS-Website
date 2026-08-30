@@ -71,8 +71,23 @@ export class LoginComponent {
         this.analytics.track('login_success');
         this.router.navigate(['/studio']);
       },
-      error: () => {
-        this.serverError = 'Invalid email or password. Please try again.';
+      error: (err) => {
+        // The error interceptor enriches the error with userFacingError.
+        // For auth errors (INVALID_CREDENTIALS), we show an inline message
+        // instead of the full dialog overlay for a smoother form UX.
+        const code = err.userFacingError?.code;
+        if (code === 'INVALID_CREDENTIALS') {
+          this.serverError = 'Invalid email or password. Please try again.';
+        } else if (code === 'VALIDATION_ERROR' && err.userFacingError?.fieldErrors) {
+          // Map backend field errors to form controls
+          const details = err.userFacingError.fieldErrors as Record<string, string>;
+          Object.entries(details).forEach(([field, msg]) => {
+            this.loginForm.get(field)?.setErrors({ serverError: msg });
+          });
+        } else {
+          // All other errors (503, 500) are handled by the overlay — just clear loading
+          this.serverError = '';
+        }
         this.loading = false;
         this.cdr.markForCheck();
       },

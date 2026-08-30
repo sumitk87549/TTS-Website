@@ -1,15 +1,18 @@
 package com.voisetu.backend;
 
-import org.springframework.http.HttpStatus;
+import com.voisetu.backend.dto.request.RegisterRequest;
+import com.voisetu.backend.dto.request.LoginRequest;
+import com.voisetu.backend.dto.response.AuthResponse;
+import com.voisetu.backend.exception.ValidationException;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,9 +35,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         if (userRepository.findByEmail(request.email()).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email already in use"));
+            throw new ValidationException("EMAIL_ALREADY_EXISTS",
+                    "An account with this email address already exists.");
         }
 
         userRepository.save(
@@ -45,25 +49,22 @@ public class AuthController {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.email());
         String token = jwtService.generateToken(userDetails);
-        
-        return ResponseEntity.ok(Map.of("token", token));
+        AppUser user = userRepository.findByEmail(request.email()).orElseThrow();
+
+        return ResponseEntity.ok(new AuthResponse(token, user.id(), user.displayName(), user.isAdmin()));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
-        }
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        // BadCredentialsException is caught by GlobalExceptionHandler → 401
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.email());
         String token = jwtService.generateToken(userDetails);
-        return ResponseEntity.ok(Map.of("token", token));
-    }
+        AppUser user = userRepository.findByEmail(request.email()).orElseThrow();
 
-    public record RegisterRequest(String email, String password, String displayName) {}
-    public record LoginRequest(String email, String password) {}
+        return ResponseEntity.ok(new AuthResponse(token, user.id(), user.displayName(), user.isAdmin()));
+    }
 }

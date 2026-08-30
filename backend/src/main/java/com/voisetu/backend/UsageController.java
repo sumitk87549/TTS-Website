@@ -1,5 +1,8 @@
 package com.voisetu.backend;
 
+import com.voisetu.backend.config.AppProperties;
+import com.voisetu.backend.dto.response.UsageResponse;
+import com.voisetu.backend.service.AuthenticatedUserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -7,29 +10,35 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * Usage quota endpoint.
+ * GET /api/usage/today — returns current-day characters used / limit.
+ */
 @RestController
 @RequestMapping("/api/usage")
 public class UsageController {
 
     private final DashboardRepository dashboardRepository;
-    private final AppUserRepository userRepository;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final AppProperties appProperties;
 
-    public UsageController(DashboardRepository dashboardRepository, AppUserRepository userRepository) {
+    public UsageController(DashboardRepository dashboardRepository,
+                           AuthenticatedUserService authenticatedUserService,
+                           AppProperties appProperties) {
         this.dashboardRepository = dashboardRepository;
-        this.userRepository = userRepository;
-    }
-    
-    private Long getUserId(Authentication auth) {
-        return userRepository.findByEmail(auth.getName()).orElseThrow().id();
+        this.authenticatedUserService = authenticatedUserService;
+        this.appProperties = appProperties;
     }
 
     @GetMapping("/today")
-    public Map<String, Object> getUsageToday(Authentication auth) {
-        Map<String, Object> usage = dashboardRepository.getUsageToday(getUserId(auth));
-        return Map.of(
-            "charactersUsed", usage.get("characters_used"),
-            "generationCount", usage.get("generation_count"),
-            "charactersLimit", 5000 // In a real app this would read from properties
+    public UsageResponse getUsageToday(Authentication auth) {
+        Map<String, Object> usage = dashboardRepository.getUsageToday(
+                authenticatedUserService.userId(auth));
+
+        return new UsageResponse(
+                ((Number) usage.get("characters_used")).intValue(),
+                ((Number) usage.get("generation_count")).intValue(),
+                appProperties.getUsage().getDailyLimit()  // reads from config, not hardcoded
         );
     }
 }

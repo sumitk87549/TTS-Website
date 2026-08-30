@@ -37,6 +37,8 @@ app:
   usage:
     daily-limit: 5000
     max-request-chars: 1000
+  tts:
+    semaphore-permits: 3
 
 # ─── Production profile (Render.com) ─────────────────────────────────────────
 # All values come from Render environment variables — nothing is hardcoded.
@@ -58,8 +60,8 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 3
-      minimum-idle: 1
+      maximum-pool-size: 5
+      minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
@@ -67,6 +69,8 @@ spring:
 supertonic:
   engine:
     base-url: ${TTS_ENGINE_URL:http://localhost:8000}
+    retry-attempts: 3
+    retry-delay-ms: 1000
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS:https://words2voice.pages.dev}
@@ -78,4 +82,29 @@ app:
   usage:
     daily-limit: 5000
     max-request-chars: 1000
+  tts:
+    semaphore-permits: 3
 
+# ─── Actuator (both profiles) ─────────────────────────────────────────────────
+---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: when_authorized
+  health:
+    defaults:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Voisetu TTS Backend
+    description: Words2Voice API — Text-to-Speech platform
+    version: 1.0.0

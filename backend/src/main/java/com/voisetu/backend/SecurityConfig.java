@@ -2,8 +2,10 @@ package com.voisetu.backend;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -13,8 +15,18 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Spring Security configuration.
+ *
+ * Key changes from original:
+ * - {@code @EnableMethodSecurity} enables {@code @PreAuthorize} on AdminController methods.
+ *   Admin role is now enforced via Spring Security, not manual DB lookups.
+ * - Actuator health endpoint is permitted publicly (for Render.com / load balancer health checks).
+ * - All other /api/** routes require authentication.
+ */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -32,34 +44,47 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable()) 
+            .csrf(csrf -> csrf.disable())
             .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.deny())
-                .contentTypeOptions(contentTypeOptions -> {})
-                .xssProtection(xssProtection -> {})
+                .frameOptions(fo -> fo.deny())
+                .contentTypeOptions(cto -> {})
+                .xssProtection(xss -> {})
             )
-            .sessionManagement(session -> session.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/public/**", "/api/auth/**").permitAll()
+                // Public endpoints — no token required
+                .requestMatchers(
+                    "/api/public/**",
+                    "/api/auth/**",
+                    "/actuator/health",        // load-balancer / Render health check
+                    "/actuator/info"           // app info — non-sensitive
+                ).permitAll()
+                // All other /api/** endpoints require authentication
                 .requestMatchers("/api/**").authenticated()
-                .anyRequest().permitAll() 
+                // Actuator management endpoints — require ADMIN role
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
+                .anyRequest().permitAll()
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter,
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        // In production: allowedOriginsRaw = "https://words2voice.pages.dev,https://words2voice.in"
         List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
                 .map(String::trim)
                 .toList();
+
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("X-Generation-Id"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -72,15 +97,15 @@ public class SecurityConfig {
 
     @Bean
     public org.springframework.security.authentication.AuthenticationProvider authenticationProvider() {
-        org.springframework.security.authentication.dao.DaoAuthenticationProvider authProvider = 
-                new org.springframework.security.authentication.dao.DaoAuthenticationProvider(userDetailsService);
+        var authProvider = new org.springframework.security.authentication.dao.DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     @Bean
     public org.springframework.security.authentication.AuthenticationManager authenticationManager(
-            org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration config) throws Exception {
+            org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration config)
+            throws Exception {
         return config.getAuthenticationManager();
     }
 }

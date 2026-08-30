@@ -4,10 +4,11 @@ import { ThemeService } from './core/theme/theme.service';
 import { AnalyticsService } from './core/analytics/analytics.service';
 import { ToastComponent } from './core/toast/toast.component';
 import { SeoService } from './core/seo/seo.service';
+import { ErrorDialogComponent } from './core/error/error-dialog.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastComponent],
+  imports: [RouterOutlet, ToastComponent, ErrorDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

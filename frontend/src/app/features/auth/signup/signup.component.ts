@@ -96,7 +96,23 @@ export class SignupComponent {
         this.router.navigate(['/studio']);
       },
       error: (err) => {
-        this.serverError = err.error?.error || 'Registration failed. Please try again.';
+        const code = err.userFacingError?.code;
+        if (code === 'EMAIL_ALREADY_EXISTS') {
+          // Show inline since it's directly actionable from the form
+          this.serverError = 'An account with this email already exists. Try logging in instead.';
+          this.email.setErrors({ serverError: true });
+        } else if (code === 'VALIDATION_ERROR' && err.userFacingError?.fieldErrors) {
+          // Map backend Bean Validation errors to Angular form fields
+          const details = err.userFacingError.fieldErrors as Record<string, string>;
+          Object.entries(details).forEach(([field, msg]) => {
+            this.signupForm.get(field)?.setErrors({ serverError: msg });
+          });
+        } else if (code) {
+          // All other errors (500, 503) are shown via the overlay dialog
+          this.serverError = '';
+        } else {
+          this.serverError = 'Registration failed. Please try again.';
+        }
         this.loading = false;
         this.cdr.markForCheck();
       },

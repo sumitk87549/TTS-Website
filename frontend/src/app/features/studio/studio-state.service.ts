@@ -3,6 +3,7 @@ import { StudioApiService } from './services/studio-api.service';
 import { StudioEstimatorService } from './services/studio-estimator.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { ToastService } from '../../core/toast/toast.service';
+import { ErrorDisplayService } from '../../core/error/error-display.service';
 import {
   GenerationState,
   ProjectSummary,
@@ -26,6 +27,7 @@ export class StudioStateService {
   private estimator = inject(StudioEstimatorService);
   private analytics = inject(AnalyticsService);
   private toast = inject(ToastService);
+  private errorDisplay = inject(ErrorDisplayService);
 
   // ── Constants ────────────────────────────────────────────────────────
   readonly maxChars = 15000;
@@ -330,16 +332,15 @@ export class StudioStateService {
           charCount: text.length,
         });
 
-        if (err.status === 429) {
-          this.error.set("You've reached today's free limit (5,000 characters). Come back tomorrow — your limit resets at midnight.");
-        } else if (err.status === 503) {
-          this.error.set('Our voice engine is warming up. Please try again in about 30 seconds.');
-        } else if (err.status === 413) {
-          this.error.set('Your script is too long for one generation. Try splitting it into smaller parts.');
-        } else if (err.status === 0 || err.status >= 500) {
-          this.error.set('Something went wrong on our end. Please try again in a moment.');
-        } else {
+        // Error display is handled globally by errorInterceptor → ErrorDisplayService.
+        // It shows a beautiful analogy + quote dialog based on the error code.
+        // We only set a brief inline error message as a fallback for edge cases
+        // where the interceptor didn't fire (e.g. purely client-side validation).
+        const code = err.userFacingError?.code;
+        if (!code) {
           this.error.set('Generation failed. Please check your text and try again.');
+        } else {
+          this.error.set(''); // Interceptor already showed the dialog
         }
       },
     });
