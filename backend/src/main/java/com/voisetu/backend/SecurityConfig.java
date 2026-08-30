@@ -52,17 +52,20 @@ public class SecurityConfig {
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // OPTIONS preflight requests must ALWAYS be permitted for CORS
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints — no token required
                 .requestMatchers(
                     "/api/public/**",
                     "/api/auth/**",
+                    "/api/voices/**",          // Voice list endpoint
                     "/actuator/health",        // load-balancer / Render health check
                     "/actuator/info"           // app info — non-sensitive
                 ).permitAll()
-                // All other /api/** endpoints require authentication
-                .requestMatchers("/api/**").authenticated()
                 // Actuator management endpoints — require ADMIN role
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
+                // All other /api/** endpoints require authentication
+                .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
             .authenticationProvider(authenticationProvider())

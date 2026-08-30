@@ -410,6 +410,42 @@
   }
 }
 
+.btn-register-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.875rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  justify-content: center;
+
+  &:hover {
+    background: var(--accent-hover);
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+.guest-badge-btn {
+  cursor: default;
+  &:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    box-shadow: none;
+  }
+}
+
+.guest-circle {
+  background: var(--bg-hover);
+}
+
 /* ── Main Content ── */
 .main-content {
   flex: 1;

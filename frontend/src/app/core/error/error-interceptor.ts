@@ -24,10 +24,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      // 401 — session expired; log out silently
-      if (err.status === 401) {
+      // 401 or 403 while unauthenticated — log out silently without popping up error dialog
+      if (err.status === 401 || (err.status === 403 && !authService.isAuthenticated())) {
         authService.logout();
-        return throwError(() => err);
+        const apiError = parseApiError(err);
+        const userFacingError = mapApiErrorToUserFacing(apiError);
+        return throwError(() => ({ ...err, userFacingError }));
       }
 
       // Parse ApiError from backend body, or synthesize one for network errors

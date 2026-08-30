@@ -145,10 +145,33 @@
   min-height: 0;
 }
 
-.editor-col {
+app-script-editor {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  width: 100%;
+}
+
+app-voice-settings {
+  display: block;
+  width: 100%;
+}
+
+app-voice-picker {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+app-audio-result {
+  display: block;
+  width: 100%;
+}
+
+.editor-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
   min-height: 0;
 }
 
@@ -168,32 +191,32 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0.75rem;
+    padding: 0.6rem 0.85rem;
     border-bottom: 1px solid var(--border);
     background: var(--bg-elevated);
 
     .script-pill {
       background: var(--accent-subtle);
       color: var(--accent);
-      padding: 0.2rem 0.6rem;
+      padding: 0.25rem 0.75rem;
       border-radius: 1rem;
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.35rem;
     }
   }
 
   textarea {
     flex: 1;
-    min-height: 160px;
-    padding: 1rem;
+    min-height: 220px;
+    padding: 1.15rem;
     border: none;
-    resize: none;
-    font-size: 1rem;
+    resize: vertical;
+    font-size: 1.05rem;
     line-height: 1.7;
     outline: none;
     font-family: inherit;
@@ -204,7 +227,7 @@
   }
 
   .char-bar {
-    height: 2px;
+    height: 3px;
     background: var(--bg-elevated);
 
     .char-bar-fill {
@@ -220,16 +243,16 @@
 /* ── Text Stats Bar ── */
 .text-stats {
   display: flex;
-  gap: 0.6rem;
-  padding: 0.35rem 0.75rem;
+  gap: 0.75rem;
+  padding: 0.45rem 0.85rem;
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
 
   .stat-chip {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 0.68rem;
+    gap: 0.3rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
     svg { opacity: 0.6; }
@@ -237,21 +260,25 @@
 }
 
 /* ── Editor Action Buttons ── */
-.editor-actions { display: flex; gap: 0.35rem; }
+.editor-actions { display: flex; gap: 0.5rem; }
 
 .editor-action-btn {
-  padding: 0.15rem 0.5rem;
+  padding: 0.35rem 0.85rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 0.4rem;
-  color: var(--text-muted);
-  font-size: 0.68rem;
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s;
 
   &:hover {
-    color: var(--text-primary);
+    color: var(--accent);
     border-color: var(--accent);
     background: var(--accent-subtle);
   }

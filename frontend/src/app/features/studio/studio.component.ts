@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { StudioStateService } from './studio-state.service';
@@ -35,6 +35,7 @@ import { TooltipDirective } from '@shared/directives/tooltip.directive';
   templateUrl: './studio.component.html',
   styleUrls: ['./studio.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
 })
 export class StudioComponent implements OnInit, OnDestroy {
   readonly state = inject(StudioStateService);

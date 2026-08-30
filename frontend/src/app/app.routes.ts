@@ -37,11 +37,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/signup/signup.component').then(m => m.SignupComponent)
   },
 
-  // Protected dashboard shell — authGuard + resolver pre-fetches user profile
+  // Dashboard shell — studio is public; protected features enforce authGuard on their child routes
   {
     path: '',
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [authGuard],
     resolve: { profile: dashboardResolver },
     children: [
       {
@@ -50,22 +49,27 @@ export const routes: Routes = [
       },
       {
         path: 'projects',
+        canActivate: [authGuard],
         loadComponent: () => import('./features/projects/projects.component').then(m => m.ProjectsComponent)
       },
       {
         path: 'voice-lab',
+        canActivate: [authGuard],
         loadComponent: () => import('./features/voice-lab/voice-lab.component').then(m => m.VoiceLabComponent)
       },
       {
         path: 'history',
+        canActivate: [authGuard],
         loadComponent: () => import('./features/history/history.component').then(m => m.HistoryComponent)
       },
       {
         path: 'settings',
+        canActivate: [authGuard],
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       },
       {
         path: 'admin',
+        canActivate: [authGuard],
         loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent)
       },
     ]
