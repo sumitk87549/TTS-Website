@@ -119,8 +119,14 @@
     transition: border-color 0.2s;
     font-family: inherit;
 
-    &:hover { border-color: var(--accent-glow); }
-    option { background: var(--bg-surface); color: var(--text-primary); }
+    &:hover {
+      border-color: var(--accent-glow);
+    }
+
+    option {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
   }
 
   .badge-soon {
@@ -185,7 +191,9 @@ app-audio-result {
   background: var(--bg-surface);
   transition: border-color 0.2s;
 
-  &:focus-within { border-color: var(--accent-glow); }
+  &:focus-within {
+    border-color: var(--accent-glow);
+  }
 
   .editor-header {
     display: flex;
@@ -223,7 +231,10 @@ app-audio-result {
     background: transparent;
     color: var(--text-primary);
 
-    &::placeholder { color: var(--text-muted); opacity: 0.7; }
+    &::placeholder {
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
   }
 
   .char-bar {
@@ -235,7 +246,10 @@ app-audio-result {
       background: var(--accent);
       transition: width 0.3s ease, background 0.3s;
       border-radius: 2px;
-      &.danger { background: var(--danger); }
+
+      &.danger {
+        background: var(--danger);
+      }
     }
   }
 }
@@ -255,12 +269,18 @@ app-audio-result {
     font-size: 0.72rem;
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
-    svg { opacity: 0.6; }
+
+    svg {
+      opacity: 0.6;
+    }
   }
 }
 
 /* ── Editor Action Buttons ── */
-.editor-actions { display: flex; gap: 0.5rem; }
+.editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
 
 .editor-action-btn {
   padding: 0.35rem 0.85rem;
@@ -284,31 +304,36 @@ app-audio-result {
   }
 }
 
-/* ── Script Warning (Hindi/Devanagari) ── */
-.script-warning {
+/* ── Script Notes (Hindi/Devanagari) ── */
+.script-notes {
   display: flex;
   gap: 0.5rem;
   padding: 0.6rem 0.75rem;
-  background: linear-gradient(135deg, rgba(255, 165, 0, 0.06), rgba(255, 165, 0, 0.02));
-  border: 1px solid rgba(255, 165, 0, 0.25);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+  border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 0.6rem;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   line-height: 1.5;
   color: var(--text-secondary);
 
-  .warning-icon {
-    font-size: 0.85rem;
+  .notes-icon {
+    font-size: 1.25rem;
     flex-shrink: 0;
-    line-height: 1.5;
+    line-height: 1.2;
   }
 
-  .warning-content {
+  .notes-content {
     p {
       margin: 0 0 0.15rem;
-      &:last-child { margin-bottom: 0; }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
 
-    strong { color: var(--accent-saffron); }
+    strong {
+      color: var(--accent-saffron);
+    }
 
     .devanagari-example {
       font-family: 'Noto Sans Devanagari', 'Mangal', sans-serif;
@@ -336,7 +361,10 @@ app-audio-result {
     border-bottom: 1px solid var(--border);
     background: var(--bg-elevated);
 
-    svg { opacity: 0.6; color: var(--text-muted); }
+    svg {
+      opacity: 0.6;
+      color: var(--text-muted);
+    }
 
     .settings-title {
       font-size: 0.72rem;
@@ -363,13 +391,22 @@ app-audio-result {
   gap: 0.2rem;
 
   /* Speed: narrowest — only a few short options like 1.0×, 1.25× */
-  &.speed-control { min-width: 80px; max-width: 90px; }
+  &.speed-control {
+    min-width: 80px;
+    max-width: 90px;
+  }
 
   /* Language: medium — flag + short label */
-  &.lang-control   { min-width: 140px; max-width: 170px; }
+  &.lang-control {
+    min-width: 140px;
+    max-width: 170px;
+  }
 
   /* Quality: widest — longest label "High — Rich voice quality" */
-  &.quality-control { min-width: 180px; max-width: 220px; }
+  &.quality-control {
+    min-width: 180px;
+    max-width: 220px;
+  }
 
   .compact-label {
     font-size: 0.62rem;
@@ -396,12 +433,22 @@ app-audio-result {
     font-family: inherit;
     transition: border-color 0.2s;
 
-    &:hover { border-color: var(--accent-glow); }
-    &:focus { border-color: var(--accent); }
+    &:hover {
+      border-color: var(--accent-glow);
+    }
 
-    option { background: var(--bg-surface); color: var(--text-primary); }
+    &:focus {
+      border-color: var(--accent);
+    }
 
-    &.quality-select { font-weight: 600; }
+    option {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    &.quality-select {
+      font-weight: 600;
+    }
   }
 }
 
@@ -442,7 +489,9 @@ app-audio-result {
   font-family: inherit;
   letter-spacing: 0.01em;
 
-  .btn-icon { display: flex; }
+  .btn-icon {
+    display: flex;
+  }
 
   .btn-spinner {
     width: 16px;
@@ -455,9 +504,13 @@ app-audio-result {
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 0 32px var(--accent-glow), 0 8px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 0 32px var(--accent-glow), 0 8px 20px rgba(0, 0, 0, 0.3);
   }
-  &:active:not(:disabled) { transform: translateY(0); }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
   &:disabled {
     opacity: 0.45;
     cursor: not-allowed;
@@ -483,7 +536,10 @@ app-audio-result {
 }
 
 /* ── Voice Picker Compact Overrides ── */
-.voice-col { display: flex; flex-direction: column; }
+.voice-col {
+  display: flex;
+  flex-direction: column;
+}
 
 .compact-picker {
   border: 1px solid var(--border);
@@ -544,15 +600,22 @@ app-audio-result {
       justify-content: center;
       gap: 0.2rem;
 
-      svg { opacity: 0.5; flex-shrink: 0; }
+      svg {
+        opacity: 0.5;
+        flex-shrink: 0;
+      }
 
       &.active {
         background: var(--accent-subtle);
         border-color: var(--accent);
         color: var(--accent);
         font-weight: 700;
-        svg { opacity: 1; }
+
+        svg {
+          opacity: 1;
+        }
       }
+
       &:hover:not(.active) {
         background: var(--bg-hover);
         color: var(--text-secondary);
@@ -576,8 +639,15 @@ app-audio-result {
     padding: 2rem 1rem;
     gap: 0.75rem;
     font-size: 0.85rem;
-    .empty-icon { opacity: 0.3; }
-    a { color: var(--accent); text-decoration: underline; }
+
+    .empty-icon {
+      opacity: 0.3;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
   }
 }
 
@@ -649,17 +719,20 @@ app-audio-result {
       font-size: 0.78rem;
       color: var(--text-primary);
     }
+
     .voice-id {
       font-size: 0.6rem;
       font-family: 'JetBrains Mono', monospace;
       color: var(--accent);
       opacity: 0.8;
     }
+
     .voice-tag {
       font-size: 0.6rem;
       color: var(--text-secondary);
       font-weight: 500;
     }
+
     .voice-usecase {
       font-size: 0.58rem;
       color: var(--accent-teal);
@@ -689,12 +762,14 @@ app-audio-result {
       color: #fff;
       transform: scale(1.1);
     }
+
     &.playing {
       background: var(--accent-teal);
       border-color: var(--accent-teal);
       color: #fff;
       animation: pulse-glow 1.5s ease-in-out infinite;
     }
+
     &.loading {
       border-color: var(--text-muted);
       background: transparent;
@@ -752,7 +827,10 @@ app-audio-result {
     gap: 0.5rem;
     flex: 1;
     flex-wrap: wrap;
-    .error-text { flex: 1; }
+
+    .error-text {
+      flex: 1;
+    }
   }
 
   .retry-btn {
@@ -767,7 +845,11 @@ app-audio-result {
     font-family: inherit;
     transition: all 0.2s;
     white-space: nowrap;
-    &:hover { background: var(--danger); color: #fff; }
+
+    &:hover {
+      background: var(--danger);
+      color: #fff;
+    }
   }
 
   .audio-result-card {
@@ -781,6 +863,7 @@ app-audio-result {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     .generation-time {
       font-size: 0.68rem;
       color: var(--text-muted);
@@ -814,6 +897,7 @@ app-audio-result {
     display: flex;
     gap: 0.3rem;
     flex-wrap: wrap;
+
     .meta-chip {
       padding: 0.1rem 0.45rem;
       background: var(--bg-elevated);
@@ -829,13 +913,14 @@ app-audio-result {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+
     audio {
       flex: 1;
       height: 48px;
       border-radius: 0.625rem;
       background: var(--bg-elevated);
       border: 1.5px solid var(--accent-glow);
-      box-shadow: 0 0 12px rgba(124, 92, 247, 0.15), 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 0 12px rgba(124, 92, 247, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
       accent-color: var(--accent);
       padding: 0 0.25rem;
     }
@@ -914,6 +999,7 @@ app-audio-result {
       color: var(--text-primary);
       letter-spacing: -0.02em;
     }
+
     .footer-tagline {
       font-size: 0.68rem;
       color: var(--text-muted);
@@ -939,7 +1025,10 @@ app-audio-result {
       color: var(--text-secondary);
       text-decoration: none;
       transition: color 0.15s;
-      &:hover { color: var(--accent); }
+
+      &:hover {
+        color: var(--accent);
+      }
     }
   }
 
@@ -963,44 +1052,90 @@ app-audio-result {
     .footer-copy {
       font-size: 0.65rem;
       color: var(--text-muted);
-      opacity: 0.7;
+      opacity: 0.9;
     }
   }
 }
 
 /* ── Animations ── */
 @keyframes person-breathe {
-  0%, 100% { transform: scaleY(1); transform-origin: bottom; }
-  50% { transform: scaleY(1.02); transform-origin: bottom; }
+
+  0%,
+  100% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+
+  50% {
+    transform: scaleY(1.02);
+    transform-origin: bottom;
+  }
 }
 
 @keyframes wave-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes soundwave {
-  0%, 100% { transform: scaleY(0.5); }
-  50% { transform: scaleY(1); }
+
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 201, 167, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(0, 201, 167, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 201, 167, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(0, 201, 167, 0);
+  }
 }
 
 /* ── Responsive ── */
@@ -1011,12 +1146,24 @@ app-audio-result {
 }
 
 @media (max-width: 768px) {
-  .studio-container { padding: 0.75rem; gap: 0.75rem; }
-  .top-bar { flex-direction: column; align-items: stretch; }
-  .studio-heading .studio-title { font-size: 1.2rem; }
+  .studio-container {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .studio-heading .studio-title {
+    font-size: 1.2rem;
+  }
+
   .settings-compact .settings-compact-row {
     flex-direction: column;
   }
+
   .studio-footer {
     margin: 0 -0.75rem -0.75rem;
     flex-direction: column;

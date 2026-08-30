@@ -68,12 +68,38 @@ export class StudioStateService {
   };
 
   readonly scriptPresets = [
-    { label: 'Story / Narration', text: 'एक समय की बात है, एक छोटे से गाँव में एक होनहार लड़की रहती थी। उसका नाम था आनंदी।' },
-    { label: 'Promotional', text: 'क्या आप अपने व्यापार को नई ऊँचाइयों पर ले जाना चाहते हैं? आज ही हमसे जुड़ें और अपने सपनों को साकार करें!' },
-    { label: 'Greeting', text: 'नमस्ते! आपका स्वागत है। आपका दिन शुभ और मंगलमय हो।' },
-    { label: 'News Bulletin', text: 'आज की ताज़ा ख़बरें: देश के विभिन्न हिस्सों में मानसून की अच्छी बारिश दर्ज की गई है।' },
-    { label: 'Hinglish Casual', text: "Yaar, aaj ka din bahut amazing raha! Maine socha tha ki kuch naya try karein, toh let's go!" },
-    { label: 'English Business', text: 'Good morning! Our quarterly results show a 28% growth in revenue. Let us walk through the key highlights.' },
+    {
+      label: 'Tech Review (Hinglish)',
+      text: "नमस्ते दोस्तों! Welcome back to the channel. आज हम review करने वाले हैं एक बिलकुल नया smartphone, जो market में तहलका मचा रहा है! इसकी display quality? Absolutely stunning! और battery life के बारे में तो क्या ही कहें... it easily lasts two days! तो चलिए, बिना किसी देरी के, let's unbox this beast!"
+    },
+    {
+      label: 'Motivational (Hinglish)',
+      text: "ज़िन्दगी में उतार-चढ़ाव तो आते रहते हैं, right? Sometimes, आपको लगता है कि सब कुछ ख़त्म हो गया है... But wait! वही तो वो पल है जब आपको सबसे ज़्यादा strong रहना होता है। Never give up! क्योंकि हर अँधेरी रात के बाद, एक bright morning ज़रूर आती है। क्या आप तैयार हैं अपने सपनों को हकीकत में बदलने के लिए?"
+    },
+    {
+      label: 'Travel Vlog (Hinglish)',
+      text: "Wow! ये नज़ारा देखिए... unbelievable! यहाँ की ठंडी हवा और ये mountains, it feels like heaven! मैं आपको बता नहीं सकता कि मुझे यहाँ आकर कितनी शांति मिल रही है। अगर आप भी nature lover हैं, तो you must visit this place at least once in your lifetime. सच कहूँ तो, I am completely mesmerized by its beauty!"
+    },
+    {
+      label: 'Educational Promo (Hinglish)',
+      text: "क्या आप coding सीखना चाहते हैं, but don't know where to start? तो चिंता मत कीजिए! हमारा नया course specifically beginners के लिए design किया गया है। इसमें हम step-by-step हर concept को cover करेंगे... from basics to advanced levels! So, what are you waiting for? Enroll now और अपने IT career की एक शानदार शुरुआत करें।"
+    },
+    {
+      label: 'Dramatic/Suspense (Hinglish)',
+      text: "रुको!!! क्या तुमने भी वो आवाज़ सुनी?! मुझे नहीं पता कि वो क्या था... but it sounded terrifying! शशश... कोई आ रहा है! Oh my god, हमें यहाँ से तुरंत निकलना होगा! Hurry up, दरवाज़ा बंद करो! मैंने कहा दरवाज़ा बंद करो!!!"
+    },
+    {
+      label: 'Health & Fitness (Hinglish)',
+      text: "आजकल की busy life में, हम अक्सर अपनी health को ignore कर देते हैं। लेकिन याद रखिए, health is wealth! रोज़ सुबह सिर्फ 30 minutes का workout आपकी पूरी life बदल सकता है। Stay hydrated, eat healthy food, और junk food से जहाँ तक हो सके दूर रहें। Let's make a promise today: no more excuses!"
+    },
+    {
+      label: 'Gaming Stream (Hinglish)',
+      text: "Hey guys! क्या match चल रहा है! Last zone बचा है... only two enemies left! मेरे पास ammo बहुत कम है... क्या हम ये match जीत पाएंगे?! Watch out, right side से flank कर रहे हैं वो! Headshot!!! Boom! Yes! We did it guys! That was an epic win!"
+    },
+    {
+      label: 'Casual/Comedy (Hinglish)',
+      text: "यार, Indian weddings में जो मज़ा है ना, वो कहीं और नहीं है! Seriously, वो paneer की सब्जी के लिए लाइन में लगना... और DJ वाले बाबू को अपनी पसंद का गाना बजाने के लिए तंग करना! Haha, it's just hilarious! और वो रिश्तेदार जो हमेशा पूछते हैं, 'Beta, next turn तुम्हारा है?' Oh god, spare me please!"
+    }
   ];
 
   // ── State Signals ────────────────────────────────────────────────────

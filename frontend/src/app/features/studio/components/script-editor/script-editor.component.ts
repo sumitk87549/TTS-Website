@@ -95,15 +95,15 @@ import { SpokenDurationPipe } from '@shared/pipes/spoken-duration.pipe';
       }
     </div>
 
-    <!-- Script Warning -->
-    <div class="script-warning">
-      <div class="warning-icon">⚠️</div>
-      <div class="warning-content">
+    <!-- Script Notes -->
+    <div class="script-notes">
+      <div class="notes-icon">💬</div>
+      <div class="notes-content">
         <p>For <strong>Hindi/Indian accent</strong>, type in Devanagari font — <em>e.g. <span
               class="devanagari-example">नमस्ते, आज का दिन</span></em></p>
         <p>Latin/English text will give <strong>English accent</strong>, even for Hindi words</p>
         <p>Mixture of Latin + Devanagari is recommended — <em>e.g. <span class="devanagari-example">Hello! आज
-              hum</span> बात करेंगे</em></p>
+              hum बात करेंगे</span></em></p>
       </div>
     </div>
   `,
